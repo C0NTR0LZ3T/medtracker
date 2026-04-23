@@ -1,0 +1,99 @@
+:root {
+    --primary: #007AFF;
+    --danger: #FF3B30;
+    --success: #34C759;
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+}
+
+body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+h1 { font-size: 24px; color: #1C1C1E; margin-bottom: 20px; }
+
+.card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #D1D1D6;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+}
+
+input:focus { border-color: var(--primary); }
+
+.full-width { grid-column: span 2; }
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+button:active { opacity: 0.7; }
+
+#add-btn { background: var(--primary); color: white; margin-top: 10px; }
+
+/* Med Items */
+.med-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #E5E5EA;
+}
+
+.med-item:last-child { border-bottom: none; }
+
+.med-info b { font-size: 18px; display: block; }
+.med-info span { font-size: 14px; color: #8E8E93; }
+
+.controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #E5E5EA;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.critical { color: var(--danger) !important; font-weight: bold; }
+
+.btn-group { display: flex; gap: 8px; }
+.small-btn { background: #E5E5EA; color: #000; padding: 8px 12px; }
+.take-btn { background: var(--success); color: white; }
+
+/* Lock State */
+.locked-mode button {
+    filter: grayscale(1);
+    pointer-events: none;
+    opacity: 0.5;
+}
