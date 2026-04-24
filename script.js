@@ -1,8 +1,8 @@
 const master_list = ["Multivitamin", "Ibuprofen", "Aspirin", "Omega 3", "Vitamin D3"];
 
 const App = {
-    activeMeds: JSON.parse(localStorage.getItem('meds_inventory_v11')) || [],
-    lastSync: parseInt(localStorage.getItem('sync_time_v11')) || Date.now(),
+    activeMeds: JSON.parse(localStorage.getItem('meds_inventory_v12')) || [],
+    lastSync: parseInt(localStorage.getItem('sync_time_v12')) || Date.now(),
     isEditMode: false,
 
     init() {
@@ -51,6 +51,7 @@ const App = {
 
         if (!name || isNaN(stock)) return alert("Please enter Name and Stock.");
 
+        // Critical level is autocalculated at 10% of initial input
         const autoThreshold = Math.floor(stock * 0.10);
 
         this.activeMeds.push({
@@ -69,7 +70,7 @@ const App = {
     },
 
     getStockClass(current, initial, threshold) {
-        if (current <= 0) return 'status-low';
+        if (current <= 0) return 'status-low'; 
         if (current <= threshold) return 'status-low';
         if (current <= (initial / 2)) return 'status-med';
         return 'status-high';
@@ -111,14 +112,15 @@ const App = {
     },
 
     save() {
-        localStorage.setItem('meds_inventory_v11', JSON.stringify(this.activeMeds));
-        localStorage.setItem('sync_time_v11', this.lastSync);
+        localStorage.setItem('meds_inventory_v12', JSON.stringify(this.activeMeds));
+        localStorage.setItem('sync_time_v12', this.lastSync);
     },
 
+    // Updated Image Path: Logic now points directly to /images/
     getImagePath(name) {
-        if (!master_list.includes(name)) return `images/meds/generic.png`;
+        if (!master_list.includes(name)) return `images/generic.png`;
         const clean = name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w-]+/g, '');
-        return `images/meds/${clean}.png`;
+        return `images/${clean}.png`;
     },
 
     render() {
@@ -137,7 +139,7 @@ const App = {
                             Daily: ${m.frequency}
                         </div>
                     </div>
-                    <img src="${this.getImagePath(m.name)}" class="med-icon" onerror="this.src='images/meds/generic.png'">
+                    <img src="${this.getImagePath(m.name)}" class="med-icon" onerror="this.src='images/generic.png'">
                 </div>
                 <div class="action-area">
                     <div class="stepper">
@@ -154,7 +156,6 @@ const App = {
             </div>
         `;}).join('');
 
-        // Re-initialize slider listeners for each card
         this.activeMeds.forEach(m => this.initSlider(m.id));
     },
 
@@ -170,7 +171,6 @@ const App = {
         const start = (e) => {
             if (this.isEditMode) return;
             isDragging = true;
-            // Prevent scrolling while sliding on mobile
             if(e.type === 'touchstart') document.body.style.overflow = 'hidden';
         };
 
@@ -197,13 +197,10 @@ const App = {
             track.style.width = `0px`;
         };
 
-        // Use Event Listeners instead of .on property to support multiple instances
         handle.addEventListener('mousedown', start);
         handle.addEventListener('touchstart', start, { passive: true });
-
         window.addEventListener('mousemove', move);
         window.addEventListener('touchmove', move, { passive: false });
-
         window.addEventListener('mouseup', end);
         window.addEventListener('touchend', end);
     },
