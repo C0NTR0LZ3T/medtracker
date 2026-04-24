@@ -3,49 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PillTracker Pro</title>
+    <title>MedTracker Pro</title>
     <link rel="stylesheet" href="style.css">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-
     <div class="app-container">
         <header>
-            <h1>MedTracker</h1>
-            <div class="sync-status" id="sync-display">Last sync: Just now</div>
+            <h1>My Meds</h1>
+            <div id="sync-display" class="sync-status">auto-deduct every 24 hours</div>
         </header>
 
-        <div class="controls-row">
-            <div class="lock-label">
-                <strong>Safety Lock</strong>
-                <span>Prevent accidental edits</span>
-            </div>
-            <label class="switch">
-                <input type="checkbox" id="lock-toggle">
-                <span class="slider"></span>
-            </label>
-        </div>
-        
-        <div id="input-section" class="card">
-            <h3>Add New Medicine</h3>
-            <div class="input-grid">
-                <input type="text" id="med-name" placeholder="Medicine Name" class="full-width">
-                <input type="number" id="med-stock" placeholder="Current Total Stock">
-                <input type="number" id="med-frequency" placeholder="Daily Dosage (Qty)">
-                <input type="number" id="med-threshold" placeholder="Low Stock Alert Level" class="full-width">
-            </div>
-            <button id="add-btn" class="primary-btn">Add to Inventory</button>
-            <button id="notif-btn" class="secondary-btn">Enable Phone Alerts</button>
-        </div>
-
-        <div id="med-list-container">
-            <h3>Current Inventory</h3>
-            <div id="med-list">
+        <section class="card setup-card">
+            <div class="input-stack">
+                <label>MEDICINE NAME</label>
+                <select id="med-selector">
+                    <option value="">-- Choose from list --</option>
+                </select>
+                <input type="text" id="custom-name" placeholder="Or type custom name...">
+                
+                <div class="stats-grid">
+                    <div>
+                        <label>TOTAL STOCK</label>
+                        <input type="number" id="new-stock" placeholder="0">
+                    </div>
+                    <div>
+                        <label>DAILY DOSE</label>
+                        <input type="number" id="new-freq" placeholder="0">
+                    </div>
                 </div>
+                <button id="add-track-btn" class="primary-btn">Start Tracking</button>
+            </div>
+        </section>
+
+        <div id="med-list"></div>
+
+        <div class="footer-actions">
+            <button id="edit-mode-btn" class="edit-btn-footer">EDIT</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
