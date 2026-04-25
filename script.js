@@ -1,27 +1,58 @@
-const master_list = ["Multivitamin", "Ibuprofen", "Aspirin", "Omega 3", "Vitamin D3"];
+const master_list = ["Nexium", "Metoprolol", "Euthyrox", "Yasmin", "Procombo", "Rinvoq"];
 
 const App = {
-    activeMeds: JSON.parse(localStorage.getItem('meds_inventory_v12')) || [],
-    lastSync: parseInt(localStorage.getItem('sync_time_v12')) || Date.now(),
+    // Restored to your original storage key
+    activeMeds: JSON.parse(localStorage.getItem('meds_inventory_v15')) || [],
+    lastSync: parseInt(localStorage.getItem('sync_time_v15')) || Date.now(),
+    history: null,
     isEditMode: false,
+    pendingAction: null,
 
     init() {
         this.cacheDOM();
         this.populateSelector();
+        this.syncStock(); // Logic for 24h auto-deduction
         this.bindEvents();
-        this.runDailySync();
-        setInterval(() => this.runDailySync(), 60000);
         this.render();
     },
 
     cacheDOM() {
         this.listEl = document.getElementById('med-list');
+        this.toastEl = document.getElementById('undo-toast');
         this.selectorEl = document.getElementById('med-selector');
-        this.customNameEl = document.getElementById('custom-name');
-        this.stockEl = document.getElementById('new-stock');
-        this.freqEl = document.getElementById('new-freq');
-        this.syncEl = document.getElementById('sync-display');
         this.editBtn = document.getElementById('edit-mode-btn');
+        this.modal = document.getElementById('refill-modal');
+        this.modalBody = document.getElementById('modal-body');
+    },
+
+    // NEW: Auto-deduct logic based on your 24h requirement
+    syncStock() {
+        const now = Date.now();
+        const diff = now - this.lastSync;
+        const daysPassed = Math.floor(diff / (24 * 60 * 60 * 1000));
+
+        if (daysPassed >= 1) {
+            this.activeMeds = this.activeMeds.map(m => {
+                for (let i = 0; i < daysPassed; i++) {
+                    const amt = m.pattern ? m.pattern[m.patternIdx] : (m.frequency || 0);
+                    m.stock = Math.max(0, m.stock - amt);
+                    if (m.pattern) {
+                        m.patternIdx = (m.patternIdx + 1) % m.pattern.length;
+                        m.takeAmount = m.pattern[m.patternIdx];
+                    }
+                }
+                return m;
+            });
+            this.lastSync = now - (diff % (24 * 60 * 60 * 1000));
+            this.save();
+        }
+    },
+
+    haptic(type = 'light') {
+        if (!navigator.vibrate) return;
+        if (type === 'light') navigator.vibrate(10);
+        if (type === 'medium') navigator.vibrate(30);
+        if (type === 'success') navigator.vibrate([20, 30, 20]);
     },
 
     populateSelector() {
@@ -34,118 +65,109 @@ const App = {
 
     bindEvents() {
         document.getElementById('add-track-btn').onclick = () => this.addNewMed();
-        this.editBtn.onclick = () => this.toggleEditMode();
-    },
+        
+        this.editBtn.onclick = () => {
+            this.isEditMode = !this.isEditMode;
+            document.body.classList.toggle('edit-active', this.isEditMode);
+            this.editBtn.classList.toggle('active', this.isEditMode);
+            this.haptic('medium');
 
-    toggleEditMode() {
-        this.isEditMode = !this.isEditMode;
-        document.body.classList.toggle('edit-active', this.isEditMode);
-        this.editBtn.innerText = this.isEditMode ? "DONE" : "EDIT";
-        this.editBtn.classList.toggle('active', this.isEditMode);
+            this.editBtn.style.opacity = '0';
+            setTimeout(() => {
+                this.editBtn.innerText = this.isEditMode ? "DONE" : "EDIT";
+                this.editBtn.style.opacity = '1';
+                this.render(); 
+            }, 150);
+        };
+
+        // Modal Events
+        document.getElementById('modal-add').onclick = () => this.confirmRefill('add');
+        document.getElementById('modal-replace').onclick = () => this.confirmRefill('replace');
+        document.getElementById('modal-cancel').onclick = () => this.modal.classList.remove('active');
     },
 
     addNewMed() {
-        const name = this.customNameEl.value.trim() || this.selectorEl.value;
-        const stock = parseInt(this.stockEl.value);
-        const freq = parseInt(this.freqEl.value);
+        const name = document.getElementById('custom-name').value.trim() || this.selectorEl.value;
+        const stock = parseInt(document.getElementById('new-stock').value);
+        const freqVal = document.getElementById('new-freq').value.toString().trim();
 
-        if (!name || isNaN(stock)) return alert("Please enter Name and Stock.");
+        if (!name || isNaN(stock)) return;
 
-        // Critical level is autocalculated at 10% of initial input
-        const autoThreshold = Math.floor(stock * 0.10);
+        // Support for "2-3" pattern
+        const pattern = freqVal.includes('-') ? freqVal.split('-').map(Number) : null;
+        const frequency = pattern ? pattern[0] : (parseInt(freqVal) || 0);
 
-        this.activeMeds.push({
-            id: Date.now(),
-            name: name,
-            initialStock: stock,
-            stock: stock,
-            frequency: freq || 0,
-            threshold: autoThreshold,
-            takeAmount: 1
-        });
+        const existing = this.activeMeds.find(m => m.name.toLowerCase() === name.toLowerCase());
 
-        this.save();
-        this.render();
-        [this.customNameEl, this.selectorEl, this.stockEl, this.freqEl].forEach(el => el.value = "");
-    },
-
-    getStockClass(current, initial, threshold) {
-        if (current <= 0) return 'status-low'; 
-        if (current <= threshold) return 'status-low';
-        if (current <= (initial / 2)) return 'status-med';
-        return 'status-high';
-    },
-
-    handleTake(id) {
-        this.activeMeds = this.activeMeds.map(m => {
-            if (m.id === id) {
-                return { ...m, stock: Math.max(0, m.stock - m.takeAmount), takeAmount: 1 };
-            }
-            return m;
-        });
-        this.save();
-        this.render();
-    },
-
-    updateTakeAmount(id, delta) {
-        if (this.isEditMode) return;
-        const med = this.activeMeds.find(m => m.id === id);
-        if (med) {
-            med.takeAmount = Math.max(1, med.takeAmount + delta);
-            this.render();
+        if (existing) {
+            this.pendingAction = { existing, stock, frequency, pattern };
+            this.modalBody.innerText = `${existing.name} has ${existing.stock} pills. Choose action:`;
+            this.modal.classList.add('active');
+        } else {
+            this.activeMeds.push({
+                id: Date.now(),
+                name,
+                stock,
+                frequency,
+                pattern,
+                patternIdx: 0,
+                threshold: Math.floor(stock * 0.1),
+                takeAmount: frequency || 1
+            });
+            this.haptic('medium');
+            this.finalize();
         }
     },
 
-    runDailySync() {
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-        if (now - this.lastSync >= oneDay) {
-            const days = Math.floor((now - this.lastSync) / oneDay);
-            this.activeMeds = this.activeMeds.map(m => ({
-                ...m, stock: Math.max(0, m.stock - (m.frequency * days))
-            }));
-            this.lastSync += (days * oneDay);
-            this.save();
-            this.render();
-        }
-        this.syncEl.innerText = "auto-deduct every 24 hours";
+    confirmRefill(type) {
+        const { existing, stock, frequency, pattern } = this.pendingAction;
+        if (type === 'add') existing.stock += stock;
+        else existing.stock = stock;
+        
+        existing.frequency = frequency;
+        existing.pattern = pattern;
+        existing.patternIdx = 0;
+        existing.takeAmount = frequency || 1;
+        
+        this.modal.classList.remove('active');
+        this.haptic('success');
+        this.finalize();
     },
 
-    save() {
-        localStorage.setItem('meds_inventory_v12', JSON.stringify(this.activeMeds));
-        localStorage.setItem('sync_time_v12', this.lastSync);
-    },
-
-    // Updated Image Path: Logic now points directly to /images/
-    getImagePath(name) {
-        if (!master_list.includes(name)) return `images/generic.png`;
-        const clean = name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w-]+/g, '');
-        return `images/${clean}.png`;
+    finalize() {
+        document.getElementById('custom-name').value = "";
+        document.getElementById('new-stock').value = "";
+        document.getElementById('new-freq').value = "";
+        this.save();
+        this.render();
     },
 
     render() {
         this.listEl.innerHTML = this.activeMeds.map(m => {
-            const colorClass = this.getStockClass(m.stock, m.initialStock, m.threshold);
-            const emptyClass = m.stock <= 0 ? 'is-empty' : '';
-
+            const isEmpty = m.stock <= 0;
+            const colorClass = m.stock <= (m.threshold || 0) ? 'status-low' : 'status-high';
+            const cycle = m.pattern ? `<span class="cycle-tag">${m.pattern.join('-')}</span>` : '';
+            
             return `
-            <div class="med-card ${emptyClass}" id="card-${m.id}">
-                <div class="del-badge" onclick="App.deleteMed(${m.id})">−</div>
+            <div class="med-card ${isEmpty ? 'is-empty' : ''}">
+                <div class="del-badge" onclick="App.deleteMed(${m.id})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </div>
                 <div class="card-top">
                     <div class="med-details">
-                        <b>${m.name}</b>
+                        <b>${m.name}${cycle}</b>
                         <div class="med-stats">
                             <span class="${colorClass}">Stock: ${m.stock}</span><br>
                             Daily: ${m.frequency}
                         </div>
                     </div>
-                    <img src="${this.getImagePath(m.name)}" class="med-icon" onerror="this.src='images/generic.png'">
+                    <img src="images/${m.name.toLowerCase().replace(/\s+/g, '_')}.png" class="med-icon" onerror="this.src='images/generic.png'">
                 </div>
                 <div class="action-area">
                     <div class="stepper">
-                        <button onclick="App.updateTakeAmount(${m.id}, -1)">-</button>
-                        <span>Take ${m.takeAmount}</span>
-                        <button onclick="App.updateTakeAmount(${m.id}, 1)">+</button>
+                        <button onclick="App.adjStep(${m.id}, -1)">−</button>
+                        <span id="step-${m.id}">Take ${m.takeAmount}</span>
+                        <button onclick="App.adjStep(${m.id}, 1)">+</button>
                     </div>
                     <div class="slide-container" id="container-${m.id}">
                         <div class="slide-text">SLIDE TO CONFIRM</div>
@@ -153,10 +175,46 @@ const App = {
                         <div class="slide-handle" id="handle-${m.id}"></div>
                     </div>
                 </div>
-            </div>
-        `;}).join('');
-
+            </div>`;
+        }).join('');
         this.activeMeds.forEach(m => this.initSlider(m.id));
+    },
+
+    adjStep(id, delta) {
+        if (this.isEditMode) return;
+        const med = this.activeMeds.find(m => m.id === id);
+        med.takeAmount = Math.max(1, (med.takeAmount || 1) + delta);
+        this.haptic('light');
+        this.render();
+    },
+
+    handleTake(id) {
+        this.history = JSON.stringify(this.activeMeds);
+        this.activeMeds = this.activeMeds.map(m => {
+            if (m.id === id) {
+                m.stock = Math.max(0, m.stock - (m.takeAmount || 1));
+                if (m.pattern) {
+                    m.patternIdx = (m.patternIdx + 1) % m.pattern.length;
+                    m.takeAmount = m.pattern[m.patternIdx];
+                }
+            }
+            return m;
+        });
+        this.haptic('success');
+        this.save();
+        this.render();
+        this.toastEl.classList.add('active');
+        setTimeout(() => this.toastEl.classList.remove('active'), 4000);
+    },
+
+    undo() {
+        if (this.history) {
+            this.activeMeds = JSON.parse(this.history);
+            this.history = null;
+            this.haptic('medium');
+            this.save();
+            this.render();
+        }
     },
 
     initSlider(id) {
@@ -164,53 +222,37 @@ const App = {
         const container = document.getElementById(`container-${id}`);
         const track = document.getElementById(`track-${id}`);
         if (!handle) return;
-
         let isDragging = false;
-        const maxSlide = container.offsetWidth - handle.offsetWidth - 8;
-
-        const start = (e) => {
-            if (this.isEditMode) return;
-            isDragging = true;
-            if(e.type === 'touchstart') document.body.style.overflow = 'hidden';
-        };
-
+        const max = container.offsetWidth - handle.offsetWidth - 10;
+        const start = () => { if (!this.isEditMode) isDragging = true; };
         const move = (e) => {
             if (!isDragging) return;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const xPos = clientX - container.getBoundingClientRect().left - 23;
-            const clampedX = Math.max(0, Math.min(xPos, maxSlide));
-            
-            handle.style.left = `${clampedX + 4}px`;
-            track.style.width = `${clampedX + 23}px`;
-            
-            if (clampedX >= maxSlide) {
-                isDragging = false;
-                document.body.style.overflow = '';
-                this.handleTake(id);
-            }
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - container.getBoundingClientRect().left - 24;
+            const pos = Math.max(0, Math.min(x, max));
+            handle.style.left = `${pos + 5}px`;
+            track.style.width = `${pos + 24}px`;
+            if (pos >= max) { isDragging = false; this.handleTake(id); }
         };
-
-        const end = () => {
-            isDragging = false;
-            document.body.style.overflow = '';
-            handle.style.left = `4px`;
-            track.style.width = `0px`;
-        };
-
+        const end = () => { isDragging = false; handle.style.left = '5px'; track.style.width = '0'; };
         handle.addEventListener('mousedown', start);
-        handle.addEventListener('touchstart', start, { passive: true });
+        handle.addEventListener('touchstart', start);
         window.addEventListener('mousemove', move);
-        window.addEventListener('touchmove', move, { passive: false });
+        window.addEventListener('touchmove', move);
         window.addEventListener('mouseup', end);
         window.addEventListener('touchend', end);
     },
 
     deleteMed(id) {
-        if(confirm("Permanently delete this tracker?")) {
+        if (confirm("Delete tracker?")) {
             this.activeMeds = this.activeMeds.filter(m => m.id !== id);
             this.save();
             this.render();
         }
+    },
+
+    save() {
+        localStorage.setItem('meds_inventory_v15', JSON.stringify(this.activeMeds));
+        localStorage.setItem('sync_time_v15', this.lastSync);
     }
 };
 

@@ -6,207 +6,172 @@
     --card: #FFFFFF;
     --text: #1C1C1E;
     --text-sec: #8E8E93;
-    
-    /* Muted Stock Colors */
-    --stock-high: #588157;   /* Sage */
-    --stock-med: #D4A373;    /* Ochre */
-    --stock-low: #BC4749;    /* Coral */
-    
-    /* Zero Stock Alert */
-    --empty-bg: #F9EAEA;    /* Muted Crimson */
-    --empty-text: #A4161A;  /* Deep Red */
+    --stock-high: #588157;
+    --stock-med: #D4A373;
+    --stock-low: #BC4749;
+    --empty-bg: #F9EAEA;
+    --empty-text: #A4161A;
 }
 
-* { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: transparent; 
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; overflow-x: hidden; }
+.app-container { width: 100%; max-width: 480px; padding: 20px; padding-bottom: 100px; }
+
+/* Micro-animations */
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); color: var(--primary); }
+    100% { transform: scale(1); }
 }
+.pop-anim { display: inline-block; animation: pop 0.3s ease-out; }
 
-body { 
-    font-family: -apple-system, system-ui, sans-serif; 
-    background: var(--bg); 
-    margin: 0; 
-    display: flex; 
-    justify-content: center; 
+/* Undo Toast */
+.toast {
+    position: fixed;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1C1C1E; color: white;
+    padding: 12px 20px; border-radius: 14px;
+    display: flex; align-items: center; gap: 20px;
+    z-index: 1000; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
+.toast.active { transform: translateX(-50%) translateY(0); }
+.toast button { background: transparent; border: none; color: #FFD60A; font-weight: 800; cursor: pointer; font-size: 14px; }
 
-.app-container { 
-    width: 100%; 
-    max-width: 480px; 
-    padding: 20px; 
-    padding-bottom: 80px; 
-}
+/* Med Card Style */
+.med-card { position: relative; background: var(--card); border-radius: 24px; padding: 24px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; transition: background-color 0.3s; }
+.med-card.is-empty { background-color: var(--empty-bg); }
 
-header { 
-    margin-bottom: 24px; 
-    text-align: center; 
-}
+.card-top { display: grid; grid-template-columns: 1.1fr 0.9fr; margin: -24px -24px 20px -24px; height: 125px; }
+.med-details { padding: 24px; display: flex; flex-direction: column; justify-content: center; }
+.med-details b { font-size: 26px; margin-bottom: 2px; letter-spacing: -0.5px; }
+.med-stats { font-size: 16px; color: var(--text-sec); line-height: 1.4; }
 
-h1 { 
-    font-size: 34px; 
-    font-weight: 800; 
-    margin: 0; 
-    letter-spacing: -0.5px; 
-}
+.med-icon { width: 100%; height: 100%; object-fit: contain; background: #FFFFFF; padding: 15px; }
+.med-card.is-empty .med-icon { background: transparent !important; }
 
-.sync-status { 
-    font-size: 14px; 
-    color: var(--text-sec); 
-    margin-top: 4px; 
-    font-weight: 500; 
-}
-
-/* Setup Card */
-.card { 
-    background: var(--card); 
-    border-radius: 24px; 
-    padding: 24px; 
-    margin-bottom: 20px; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-}
-
-.input-stack { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-}
-
-.stats-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 12px; 
-}
-
-label { 
-    font-size: 11px; 
-    font-weight: 700; 
-    color: var(--text-sec); 
-    margin-left: 4px; 
-    margin-bottom: 4px; 
-    display: block; 
-}
-
-input, select { 
-    width: 100%; 
-    padding: 14px; 
-    border: 1px solid #E5E5EA; 
-    border-radius: 12px; 
-    font-size: 16px; 
-    background: #FAFAFA; 
-    outline: none;
-}
-
-input:focus { border-color: var(--primary); }
-
-.primary-btn { 
-    background: var(--primary); 
+/* REPOSITIONED & CENTERED DELETE BADGE */
+.del-badge { 
+    display: none; 
+    position: absolute; 
+    top: 12px; 
+    left: 12px; 
+    width: 32px; 
+    height: 32px; 
+    background: var(--danger); 
     color: white; 
-    border: none; 
-    padding: 16px; 
-    border-radius: 14px; 
-    font-weight: 700; 
-    cursor: pointer; 
-    margin-top: 8px; 
-}
-
-/* Med Cards */
-.med-card { 
-    position: relative; 
-    background: var(--card); 
-    border-radius: 24px; 
-    padding: 24px; 
-    margin-bottom: 18px; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-/* Zero Stock Visual Alarm */
-.med-card.is-empty {
-    background-color: var(--empty-bg);
-    border: 1px solid rgba(164, 22, 26, 0.1);
-}
-
-.med-card.is-empty .med-details b,
-.med-card.is-empty .med-stats {
-    color: var(--empty-text);
-}
-
-.card-top { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px; 
-}
-
-.med-details b { font-size: 24px; display: block; margin-bottom: 4px; }
-.med-stats { font-size: 16px; color: var(--text-sec); }
-
-.status-high { color: var(--stock-high); font-weight: 700; }
-.status-med { color: var(--stock-med); font-weight: 700; }
-.status-low { color: var(--stock-low); font-weight: 800; }
-
-.med-icon { 
-    width: 65px; height: 65px; 
-    border-radius: 14px; 
-    object-fit: cover; 
-    background: var(--bg); 
-}
-
-/* Edit Mode */
-.del-badge {
-    display: none;
-    position: absolute;
-    top: -8px; left: -8px;
-    width: 28px; height: 28px;
-    background: var(--danger);
-    color: white;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 20px;
-    border: 3px solid var(--bg);
-    align-items: center; justify-content: center;
+    border-radius: 50%; 
+    border: 3px solid var(--card); 
+    align-items: center;
+    justify-content: center;
+    z-index: 15; 
     cursor: pointer;
-    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 body.edit-active .del-badge { display: flex; }
-body.edit-active .med-card { animation: shake 0.3s infinite linear; pointer-events: none; }
-body.edit-active .del-badge { pointer-events: auto; }
+body.edit-active .med-card { animation: shake 0.3s infinite linear; }
+@keyframes shake { 0% { transform: rotate(0.5deg); } 50% { transform: rotate(-0.5deg); } 100% { transform: rotate(0.5deg); } }
 
-@keyframes shake {
-    0% { transform: rotate(0.4deg); }
-    50% { transform: rotate(-0.4deg); }
-    100% { transform: rotate(0.4deg); }
-}
+header { margin-bottom: 24px; text-align: center; }
+.header-main { display: flex; justify-content: space-between; align-items: center; }
+h1 { font-size: 34px; font-weight: 800; margin: 0; }
+#notif-btn { background: #E5E5EA; border: none; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-sec); }
+.card { background: var(--card); border-radius: 24px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+.input-stack { display: flex; flex-direction: column; gap: 12px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+label { font-size: 11px; font-weight: 700; color: var(--text-sec); margin-bottom: 4px; display: block; text-transform: uppercase; }
+input, select { width: 100%; padding: 14px; border: 1px solid #E5E5EA; border-radius: 12px; font-size: 16px; background: #FAFAFA; outline: none; }
+.primary-btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; }
 
-/* Actions */
-.action-area { display: flex; flex-direction: column; gap: 12px; }
-.stepper { 
-    display: flex; background: #F2F2F7; border-radius: 14px; 
-    height: 50px; align-items: center; justify-content: space-between; 
-}
-.stepper button { width: 60px; height: 100%; background: transparent; border: none; font-size: 22px; color: var(--primary); }
+/* Controls */
+.action-area { display: flex; flex-direction: column; gap: 20px; }
+.stepper { display: flex; background: #F2F2F7; border-radius: 14px; height: 52px; align-items: center; justify-content: space-between; }
+.stepper button { width: 65px; background: transparent; border: none; font-size: 24px; color: var(--primary); }
 .stepper span { font-weight: 700; font-size: 18px; }
 
-.slide-container { 
-    position: relative; width: 100%; height: 54px; 
-    background: #E5E5EA; border-radius: 27px; 
-    display: flex; align-items: center; justify-content: center; overflow: hidden; 
-}
-.slide-text { position: absolute; font-size: 13px; font-weight: 700; color: #8E8E93; pointer-events: none; text-transform: uppercase; }
-.slide-track { position: absolute; top: 0; left: 0; height: 100%; background: var(--success); width: 0; }
-.slide-handle { 
-    position: absolute; left: 4px; width: 46px; height: 46px; 
-    background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.15); 
-    display: flex; align-items: center; justify-content: center; z-index: 2; 
-}
-.slide-handle::after { content: '→'; font-weight: bold; color: var(--success); }
+.slide-container { position: relative; width: 100%; height: 58px; background: #E5E5EA; border-radius: 29px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.slide-track { position: absolute; left: 0; height: 100%; background: var(--success); width: 0; }
+.slide-handle { position: absolute; left: 5px; width: 48px; height: 48px; background: white; border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; z-index: 2; }
+.slide-handle::after { content: '→'; color: var(--success); font-weight: bold; }
+.slide-text { position: absolute; font-size: 12px; font-weight: 800; color: #8E8E93; letter-spacing: 1px; text-transform: uppercase; }
 
-/* Footer */
-.footer-actions { display: flex; justify-content: center; margin-top: 30px; margin-bottom: 40px; }
-.edit-btn-footer {
-    background: transparent; border: none;
-    color: var(--text-sec); font-weight: 700; font-size: 13px;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+.status-high { color: var(--stock-high); font-weight: 700; }
+.status-low { color: var(--stock-low); font-weight: 800; }
+.med-card.is-empty .med-details b, .med-card.is-empty .med-stats { color: var(--empty-text); }
+
+/* NEW MODAL STYLES */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal-content { background: var(--card); padding: 24px; border-radius: 28px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+.modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.modal-btn { padding: 14px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; }
+.modal-btn.primary { background: var(--primary); color: white; }
+.modal-btn.secondary { background: #E5E5EA; }
+.modal-btn.cancel { background: transparent; color: var(--danger); }
+.cycle-tag { font-size: 10px; background: #E5E5EA; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; letter-spacing: 0; }
+
+.footer-actions { display: flex; justify-content: center; margin-top: 40px; }
+.edit-btn-footer { background: transparent; border: none; color: var(--text-sec); font-weight: 800; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s ease; cursor: pointer; }
+.edit-btn-footer.active { color: var(--danger); transform: scale(1.1); }
+
+/* Refill Modal Overlay */
+.modal-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); 
+    display: none; align-items: center; justify-content: center; 
+    z-index: 2000; padding: 20px; 
 }
-.edit-btn-footer.active { color: var(--danger); }
+.modal-overlay.active { display: flex; }
+
+/* Modal Box */
+.modal-content { 
+    background: var(--card); padding: 24px; border-radius: 28px; 
+    width: 100%; max-width: 340px; text-align: center; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+}
+
+/* Modal Buttons */
+.modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.modal-btn { padding: 14px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; }
+.modal-btn.primary { background: var(--primary); color: white; }
+.modal-btn.secondary { background: #E5E5EA; color: var(--text); }
+.modal-btn.cancel { background: transparent; color: var(--danger); }
+
+/* Cycle Badge (The "2-3" indicator) */
+.cycle-tag { 
+    font-size: 10px; background: #E5E5EA; padding: 2px 6px; 
+    border-radius: 4px; margin-left: 8px; vertical-align: middle; 
+}
+
+/* --- Add these to the end of your original style.css --- */
+
+/* Fixes the overlap by ensuring enough space between controls */
+.action-area { gap: 20px !important; }
+
+/* Cycle Badge (The small "2-3" box next to the name) */
+.cycle-tag { 
+    font-size: 11px; background: #E5E5EA; padding: 2px 6px; 
+    border-radius: 6px; margin-left: 10px; vertical-align: middle; 
+    color: var(--text-sec); font-weight: 600;
+}
+
+/* New Refill Modal Styling */
+.modal-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); 
+    display: none; align-items: center; justify-content: center; 
+    z-index: 2000; padding: 20px; 
+}
+.modal-overlay.active { display: flex; }
+.modal-content { 
+    background: var(--card); padding: 28px; border-radius: 30px; 
+    width: 100%; max-width: 340px; text-align: center; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+}
+.modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+.modal-btn { padding: 16px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; font-size: 15px; }
+.modal-btn.primary { background: var(--primary); color: white; }
+.modal-btn.secondary { background: #E5E5EA; color: var(--text); }
+.modal-btn.cancel { background: transparent; color: var(--danger); margin-top: 5px; }
