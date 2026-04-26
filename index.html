@@ -4,57 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MedTracker Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007AFF">
+    <meta name="theme-color" content="#0A84FF">
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <div class="header-main">
-                <div style="width: 40px;"></div>
-                <h1>My Meds</h1>
-                <button id="notif-btn">🔔</button>
-            </div>
-            <div id="sync-display" class="sync-status">auto-deduct every 24 hours</div>
-        </header>
+<div class="app-container">
 
-        <section class="card setup-card">
-            <div class="input-stack">
-                <label>MEDICINE NAME</label>
-                <select id="med-selector"><option value="">-- Choose from list --</option></select>
-                <input type="text" id="custom-name" placeholder="Or type custom name...">
-                <div class="stats-grid">
-                    <div><label>TOTAL STOCK</label><input type="number" id="new-stock" placeholder="0"></div>
-                    <div><label>DAILY DOSE</label><input type="text" id="new-freq" placeholder="e.g. 1 or 2-3"></div>
+    <header>
+        <div class="header-main">
+            <button id="theme-btn" class="header-btn" title="Toggle theme">🌙</button>
+            <h1>My Meds</h1>
+            <button id="notif-btn" class="header-btn" title="Enable notifications">🔔</button>
+        </div>
+        <div id="sync-display" class="sync-status">Synced just now</div>
+    </header>
+
+    <section class="card">
+        <div class="input-stack">
+            <div>
+                <label>Select Medication</label>
+                <select id="med-selector"><option value="">Search from common medications…</option></select>
+            </div>
+            <div>
+                <label>Or Enter Custom Name</label>
+                <input type="text" id="custom-name" placeholder="e.g. Metformin 500mg">
+            </div>
+            <div class="stats-grid">
+                <div>
+                    <label>Total Units in Stock</label>
+                    <input type="number" id="new-stock" placeholder="0" min="0">
                 </div>
-                <button id="add-track-btn" class="primary-btn">Start Tracking</button>
-            </div>
-        </section>
-
-        <div id="med-list"></div>
-
-        <div id="refill-modal" class="modal-overlay">
-            <div class="modal-content">
-                <h3>Existing Med Found</h3>
-                <p id="modal-body"></p>
-                <div class="modal-actions">
-                    <button id="modal-add" class="modal-btn primary">ADD TO STOCK</button>
-                    <button id="modal-replace" class="modal-btn secondary">REPLACE STOCK</button>
-                    <button id="modal-cancel" class="modal-btn cancel">CANCEL</button>
+                <div>
+                    <label>Daily Dose</label>
+                    <input type="text" id="new-freq" placeholder="e.g. 1 or 2-3">
                 </div>
             </div>
+            <button id="add-track-btn" class="primary-btn">Begin Tracking</button>
         </div>
+    </section>
 
-        <div id="undo-toast" class="toast">
-            <span>Dose tracked</span>
-            <button onclick="App.undo()">UNDO</button>
-        </div>
+    <div id="med-list"></div>
 
-        <div class="footer-actions">
-            <button id="edit-mode-btn" class="edit-btn-footer">EDIT</button>
+    <!-- Refill modal -->
+    <div id="refill-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Medication Already Tracked</h3>
+            <p id="modal-body"></p>
+            <div class="modal-actions">
+                <button id="modal-add"     class="modal-btn primary">Add to Existing Stock</button>
+                <button id="modal-replace" class="modal-btn secondary">Replace Stock</button>
+                <button id="modal-cancel"  class="modal-btn cancel">Cancel</button>
+            </div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Inline edit modal -->
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content edit-modal-content">
+            <h3>Edit Medication</h3>
+            <input type="hidden" id="edit-id">
+            <div class="edit-input-stack">
+                <div>
+                    <label>Name</label>
+                    <input type="text" id="edit-name">
+                </div>
+                <div class="edit-stats-grid">
+                    <div>
+                        <label>Units in Stock</label>
+                        <input type="number" id="edit-stock" min="0">
+                    </div>
+                    <div>
+                        <label>Daily Dose</label>
+                        <input type="text" id="edit-freq" placeholder="1 or 2-3">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="edit-save-btn"   class="modal-btn primary">Save Changes</button>
+                <button id="edit-cancel-btn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Undo toast -->
+    <div id="undo-toast" class="toast">
+        <span class="toast-msg">Dose recorded</span>
+        <button class="toast-undo" onclick="App.undo()">Undo</button>
+    </div>
+
+    <div class="footer-actions">
+        <button id="edit-mode-btn" class="edit-btn-footer">Edit</button>
+    </div>
+
+</div>
+<script src="script.js"></script>
 </body>
 </html>

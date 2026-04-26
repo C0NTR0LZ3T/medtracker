@@ -1,10 +1,13 @@
 {
   "name": "MedTracker Pro",
   "short_name": "MedTracker",
+  "description": "Track your daily medications and never miss a dose.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#F2F2F7",
-  "theme_color": "#007AFF",
+  "orientation": "portrait",
+  "background_color": "#111118",
+  "theme_color": "#0A84FF",
+  "categories": ["health", "medical"],
   "icons": [
     {
       "src": "images/icon.png",
