@@ -10,7 +10,6 @@
     --bg-2:        #E5E5EA;
     --bg-3:        #D8D8DD;
     --card:        #FFFFFF;
-    --card-inner:  #F2F2F7;
     --text:        #1C1C1E;
     --text-sec:    #6C6C70;
     --border:      #E5E5EA;
@@ -20,257 +19,365 @@
     --radius-card: 22px;
     --radius-sm:   12px;
     --shadow:      0 2px 16px rgba(0,0,0,0.07);
-    --tt:          background-color 0.3s ease,color 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease;
+    --tt:          background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* ── Dark theme — layered greys so elements are always distinguishable ────── */
+/* ── Dark theme ──────────────────────────────────────────────────────────── */
 html.dark {
-    --bg:         #111118;
-    --bg-2:       #22222C;   /* stepper / slider bg — clearly different from card */
-    --bg-3:       #2A2A36;   /* hover / pressed states */
-    --card:       #1A1A24;   /* card surface */
-    --card-inner: #222230;   /* inner elements on a card */
-    --text:       #F0F0F5;
-    --text-sec:   #909098;
-    --border:     #30303E;
-    --input-bg:   #20202C;
-    --empty-bg:   #2A1A1E;
-    --empty-text: #E07070;
-    --shadow:     0 2px 24px rgba(0,0,0,0.5);
+    --bg:        #111118;
+    --bg-2:      #22222C;
+    --bg-3:      #2A2A36;
+    --card:      #1A1A24;
+    --text:      #F0F0F5;
+    --text-sec:  #909098;
+    --border:    #30303E;
+    --input-bg:  #20202C;
+    --empty-bg:  #2A1A1E;
+    --empty-text:#E07070;
+    --shadow:    0 2px 24px rgba(0,0,0,0.5);
 }
 
 /* ── Reset ───────────────────────────────────────────────────────────────── */
-*,*::before,*::after { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { transition: var(--tt); }
-
 body {
-    font-family:'Inter',-apple-system,system-ui,sans-serif;
-    background:var(--bg); margin:0; display:flex; justify-content:center;
-    overflow-x:hidden; color:var(--text); -webkit-font-smoothing:antialiased;
-    transition:var(--tt);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg); margin: 0; display: flex; justify-content: center;
+    overflow-x: hidden; color: var(--text); -webkit-font-smoothing: antialiased;
+    transition: var(--tt);
 }
-
-.app-container { width:100%; max-width:480px; padding:24px 20px 120px; }
+.app-container { width: 100%; max-width: 480px; padding: 24px 20px 120px; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
-header { margin-bottom:28px; }
-.header-main { display:flex; justify-content:space-between; align-items:center; }
-h1 { font-size:32px; font-weight:800; margin:0; letter-spacing:-0.8px; color:var(--text); }
-.sync-status { font-size:12px; font-weight:500; color:var(--text-sec); text-align:center; margin-top:6px; }
+header { margin-bottom: 28px; }
+.header-main { display: flex; justify-content: space-between; align-items: center; }
+h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -0.8px; }
+.sync-status { font-size: 12px; font-weight: 500; color: var(--text-sec); text-align: center; margin-top: 6px; }
 
 .header-btn {
-    width:40px; height:40px; border-radius:50%; border:none;
-    background:var(--bg-2); display:flex; align-items:center; justify-content:center;
-    font-size:18px; cursor:pointer; transition:background 0.2s,transform 0.15s; flex-shrink:0;
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: var(--bg-2); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; transition: background 0.2s, transform 0.15s; flex-shrink: 0;
 }
-.header-btn:active { transform:scale(0.92); }
-#notif-btn.notif-on  { background:rgba(48,209,88,0.18); }
-#notif-btn.notif-off { background:rgba(255,69,58,0.15); }
+.header-btn:active { transform: scale(0.92); }
+#notif-btn.notif-on  { background: rgba(48,209,88,0.18); }
+#notif-btn.notif-off { background: rgba(255,69,58,0.15); }
 
 /* ── Setup card ──────────────────────────────────────────────────────────── */
-.card { background:var(--card); border-radius:var(--radius-card); padding:22px; margin-bottom:20px; box-shadow:var(--shadow); transition:var(--tt); }
-.input-stack { display:flex; flex-direction:column; gap:14px; }
-.stats-grid  { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.setup-wrap { max-width: 480px; margin: 0 auto 28px; }
+.card { background: var(--card); border-radius: var(--radius-card); padding: 22px; margin-bottom: 20px; box-shadow: var(--shadow); transition: var(--tt); }
+.input-stack { display: flex; flex-direction: column; gap: 14px; }
+.stats-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-label { font-size:11px; font-weight:700; color:var(--text-sec); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.6px; }
+label { font-size: 11px; font-weight: 700; color: var(--text-sec); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.6px; }
 
-input,select {
-    width:100%; padding:13px 14px; border:1.5px solid var(--border);
-    border-radius:var(--radius-sm); font-size:15px; font-family:inherit;
-    font-weight:500; background:var(--input-bg); color:var(--text);
-    outline:none; transition:border-color 0.2s,background 0.3s; appearance:none;
+input, select {
+    width: 100%; padding: 13px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 15px; font-family: inherit;
+    font-weight: 500; background: var(--input-bg); color: var(--text);
+    outline: none; transition: border-color 0.2s, background 0.3s; appearance: none;
 }
-input:focus,select:focus { border-color:var(--primary); background:var(--card); }
-html.dark select option   { background:#1A1A24; color:#F0F0F5; }
+input:focus, select:focus { border-color: var(--primary); background: var(--card); }
+html.dark select option   { background: #1A1A24; color: #F0F0F5; }
 
 @keyframes shake {
-    0%,100% { transform:translateX(0); }
-    20%      { transform:translateX(-6px); }
-    40%      { transform:translateX(6px); }
-    60%      { transform:translateX(-4px); }
-    80%      { transform:translateX(4px); }
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-6px); }
+    40%     { transform: translateX(6px); }
+    60%     { transform: translateX(-4px); }
+    80%     { transform: translateX(4px); }
 }
-.shake { animation:shake 0.35s ease; border-color:var(--danger) !important; }
+.shake { animation: shake 0.35s ease; border-color: var(--danger) !important; }
 
 .primary-btn {
-    background:var(--primary); color:#fff; border:none; padding:15px;
-    border-radius:var(--radius-sm); font-size:15px; font-family:inherit;
-    font-weight:700; cursor:pointer; transition:opacity 0.15s;
+    background: var(--primary); color: #fff; border: none; padding: 15px;
+    border-radius: var(--radius-sm); font-size: 15px; font-family: inherit;
+    font-weight: 700; cursor: pointer; transition: opacity 0.15s;
 }
-.primary-btn:active { opacity:0.82; }
+.primary-btn:active { opacity: 0.82; }
 
-
+/* ── Onboarding ──────────────────────────────────────────────────────────── */
+.onboarding-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(10px); display: none; align-items: center;
+    justify-content: center; z-index: 3000; padding: 24px;
+}
+.onboarding-overlay.active { display: flex; }
+.onboarding-card {
+    background: var(--card); border-radius: 30px; padding: 36px 28px;
+    max-width: 360px; width: 100%; text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+}
+.onboarding-icon        { font-size: 56px; margin-bottom: 16px; }
+.onboarding-card h2     { font-size: 24px; font-weight: 800; margin: 0 0 8px; letter-spacing: -0.5px; }
+.onboarding-card p      { font-size: 14px; color: var(--text-sec); line-height: 1.6; margin: 0 0 28px; }
+.onboarding-steps       { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; text-align: left; }
+.onboarding-step        { display: flex; align-items: flex-start; gap: 14px; }
+.step-num               { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-text strong       { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.step-text span         { font-size: 13px; color: var(--text-sec); }
+.onboarding-btn         { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--primary); color: #fff; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
-.empty-state { text-align:center; padding:64px 20px; color:var(--text-sec); }
-.empty-icon  { font-size:52px; margin-bottom:16px; }
-.empty-title { font-size:17px; font-weight:700; color:var(--text); margin:0 0 6px; }
-.empty-sub   { font-size:14px; margin:0; }
+.empty-state { text-align: center; padding: 64px 20px; color: var(--text-sec); }
+.empty-icon  { font-size: 52px; margin-bottom: 16px; }
+.empty-title { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+.empty-sub   { font-size: 14px; margin: 0; }
+
+/* ── Med list — single column, full width ────────────────────────────────── */
+#med-list { display: flex; flex-direction: column; gap: 16px; }
 
 /* ── Med card ────────────────────────────────────────────────────────────── */
 .med-card {
-    position:relative; background:var(--card); border-radius:var(--radius-card);
-    padding:20px; margin-bottom:16px; box-shadow:var(--shadow);
-    overflow:visible; transition:var(--tt);
+    position: relative; background: var(--card); border-radius: var(--radius-card);
+    padding: 20px; box-shadow: var(--shadow); overflow: hidden;
+    transition: var(--tt), transform 0.15s, opacity 0.15s;
+    touch-action: pan-y; will-change: transform;
 }
-.med-card.is-empty    { background:var(--empty-bg); }
-.med-card.taken-today { border-left:3px solid var(--success); }
+.med-card.is-empty    { background: var(--empty-bg); }
+.med-card.taken-today { border-left: 3px solid var(--success); }
+.med-card.is-low      { border-left: 3px solid var(--warning); }
+.med-card.dragging    { opacity: 0.45; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
 
-/* Card header */
-.card-header { display:flex; flex-direction:column; gap:5px; margin-bottom:18px; }
+/* card header */
+.card-header      { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+.card-title-row   { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.med-name         { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.15; color: var(--text); }
+.med-card.is-empty .med-name { color: var(--empty-text); }
 
-.card-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-
-.med-name { font-size:26px; font-weight:800; letter-spacing:-0.6px; line-height:1.15; color:var(--text); }
-.med-card.is-empty .med-name { color:var(--empty-text); }
-
-/* "Taken today" badge */
 .taken-badge {
-    flex-shrink:0; margin-top:5px;
-    font-size:11px; font-weight:700; padding:3px 9px;
-    border-radius:20px; background:rgba(48,209,88,0.15); color:var(--success);
-    white-space:nowrap;
+    flex-shrink: 0; margin-top: 5px; font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px;
+    background: rgba(48,209,88,0.15); color: var(--success); white-space: nowrap;
 }
 
-.med-meta { font-size:13px; font-weight:500; color:var(--text-sec); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.stat-sep    { color:var(--border); }
-.daily-label { color:var(--text-sec); }
+.med-meta    { font-size: 13px; font-weight: 500; color: var(--text-sec); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.stat-sep    { color: var(--border); }
+.daily-label { color: var(--text-sec); }
 
-.status-high  { color:#3A9E50; font-weight:700; }
-.status-med   { color:#B07D10; font-weight:700; }
-.status-low   { color:#C04545; font-weight:700; }
-.status-empty { color:var(--empty-text); font-weight:700; }
-html.dark .status-high { color:#5DC975; }
-html.dark .status-med  { color:#E6B84A; }
-html.dark .status-low  { color:#E07070; }
+/* status colours */
+.status-high  { color: #3A9E50; font-weight: 700; }
+.status-med   { color: #B07D10; font-weight: 700; }
+.status-low   { color: #C04545; font-weight: 700; }
+.status-empty { color: var(--empty-text); font-weight: 700; }
+html.dark .status-high { color: #5DC975; }
+html.dark .status-med  { color: #E6B84A; }
+html.dark .status-low  { color: #E07070; }
 
-/* ── Supply bar ──────────────────────────────────────────────────────────── */
-.supply-bar-track { width:100%; height:6px; background:var(--bg-2); border-radius:99px; overflow:hidden; margin-top:6px; }
-.supply-bar-fill  { height:100%; border-radius:99px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1),background-color 0.4s; }
-.bar-green  { background:#6ABF7B; }
-.bar-yellow { background:#E6B84A; }
-.bar-red    { background:#D96B6B; }
-.supply-label { font-size:11px; font-weight:600; margin-top:5px; }
+/* supply bar */
+.supply-bar-track { width: 100%; height: 6px; background: var(--bg-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.supply-bar-fill  { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.bar-green  { background: #6ABF7B; }
+.bar-yellow { background: #E6B84A; }
+.bar-red    { background: #D96B6B; }
+.supply-label { font-size: 11px; font-weight: 600; margin-top: 5px; }
 
-/* Cycle tag */
-.cycle-tag { font-size:10px; font-weight:700; background:var(--border); color:var(--text-sec); padding:2px 7px; border-radius:6px; margin-left:6px; vertical-align:middle; }
+.cycle-tag { font-size: 10px; font-weight: 700; background: var(--border); color: var(--text-sec); padding: 2px 7px; border-radius: 6px; margin-left: 6px; vertical-align: middle; }
 
-/* ── Delete & Edit badges ────────────────────────────────────────────────── */
-.del-badge,.edit-badge {
-    display:flex; opacity:0; pointer-events:none; position:absolute;
-    width:30px; height:30px; border-radius:50%;
-    align-items:center; justify-content:center; z-index:15; cursor:pointer;
-    box-shadow:0 2px 8px rgba(0,0,0,0.22); transition:opacity 0.2s,background 0.2s;
+/* ── Quick refill button ─────────────────────────────────────────────────── */
+.quick-refill-btn {
+    margin-left: auto;
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--warning);
+    background: transparent; color: var(--warning);
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
 }
-.del-badge  { top:-10px; left:-10px;  background:var(--danger);  border:2.5px solid var(--bg); }
-.edit-badge { top:-10px; right:-10px; background:var(--primary); border:2.5px solid var(--bg); }
-body.edit-active .del-badge,
-body.edit-active .edit-badge { opacity:1; pointer-events:auto; }
-.del-badge.confirm { background:var(--warning); }
+.quick-refill-btn:active { background: var(--warning); color: #fff; }
 
-body.edit-active .med-card { animation:cardShake 0.35s infinite linear; }
-@keyframes cardShake { 0%{transform:rotate(0.5deg)} 50%{transform:rotate(-0.5deg)} 100%{transform:rotate(0.5deg)} }
+/* ── Extra dose area ─────────────────────────────────────────────────────── */
+.extra-dose-area {
+    display: flex; flex-direction: column; gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
 
-/* ── Action area ─────────────────────────────────────────────────────────── */
-.action-area { display:flex; flex-direction:column; gap:14px; }
+.extra-dose-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-sec);
+}
 
-/* Stepper — uses bg-2 which is always a visible step up from card */
+/* stepper */
 .stepper {
-    display:flex; background:var(--bg-2); border-radius:14px; height:50px;
-    align-items:center; justify-content:space-between; overflow:hidden; transition:background 0.3s;
+    display: flex; background: var(--bg-2); border-radius: 14px;
+    height: 48px; align-items: center; justify-content: space-between;
+    overflow: hidden; transition: background 0.3s;
 }
-.stepper button { width:60px; height:100%; background:transparent; border:none; font-size:22px; color:var(--primary); cursor:pointer; transition:background 0.15s; }
-.stepper button:active { background:rgba(10,132,255,0.12); }
-.stepper span { font-weight:700; font-size:16px; color:var(--text); letter-spacing:-0.2px; }
+.stepper button {
+    width: 56px; height: 100%; background: transparent; border: none;
+    font-size: 22px; color: var(--primary); cursor: pointer; transition: background 0.15s;
+}
+.stepper button:active { background: rgba(10,132,255,0.12); }
+.stepper span { font-weight: 700; font-size: 16px; color: var(--text); }
 
-/* Slide to confirm — uses bg-2 so it's never the same shade as the card */
+/* slide to confirm */
 .slide-container {
-    position:relative; width:100%; height:56px; background:var(--bg-2);
-    border-radius:28px; display:flex; align-items:center; justify-content:center;
-    overflow:hidden; transition:background 0.3s;
+    position: relative; width: 100%; height: 54px;
+    background: var(--bg-2); border-radius: 27px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; transition: background 0.3s;
 }
-.slide-track    { position:absolute; left:0; height:100%; background:var(--success); width:0; opacity:0.85; }
-.slide-handle   {
-    position:absolute; left:5px; width:46px; height:46px;
-    background:var(--card); border-radius:50%;
-    box-shadow:0 2px 10px rgba(0,0,0,0.2);
-    display:flex; align-items:center; justify-content:center;
-    z-index:2; cursor:grab; user-select:none; color:var(--success);
-    transition:background 0.3s;
+.slide-track  { position: absolute; left: 0; height: 100%; background: var(--success); width: 0; opacity: 0.85; }
+.slide-handle {
+    position: absolute; left: 5px; width: 44px; height: 44px;
+    background: var(--card); border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2; cursor: grab; user-select: none; color: var(--success);
+    transition: background 0.3s;
 }
-/* In dark mode give the handle a subtle border so it pops off bg-2 */
-html.dark .slide-handle { box-shadow:0 2px 10px rgba(0,0,0,0.5), 0 0 0 1px var(--border); }
-.slide-text { position:absolute; font-size:11px; font-weight:700; color:var(--text-sec); letter-spacing:0.8px; text-transform:uppercase; pointer-events:none; user-select:none; }
-
-/* ── Dose history log (collapsible) ──────────────────────────────────────── */
-.dose-log { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
-
-.dose-log-toggle {
-    width:100%; display:flex; align-items:center; justify-content:space-between;
-    background:none; border:none; padding:0; cursor:pointer;
-    font-family:inherit; font-size:11px; font-weight:700;
-    text-transform:uppercase; letter-spacing:0.7px; color:var(--text-sec);
+html.dark .slide-handle { box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 1px var(--border); }
+.slide-text {
+    position: absolute; font-size: 10px; font-weight: 700;
+    color: var(--text-sec); letter-spacing: 0.8px; text-transform: uppercase;
+    pointer-events: none; user-select: none;
 }
-.dose-log-toggle:hover { color:var(--text); }
-.toggle-chevron { transition:transform 0.25s ease; flex-shrink:0; }
 
-.dose-log-body { margin-top:10px; }
-
-.dose-log-row {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;
+/* ── Edit overlay ────────────────────────────────────────────────────────── */
+.edit-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.58); border-radius: var(--radius-card);
+    align-items: center; justify-content: center; gap: 12px;
+    backdrop-filter: blur(2px); z-index: 10;
 }
-.dose-log-row:last-child { border-bottom:none; }
-.dose-log-time { color:var(--text-sec); font-weight:500; }
-.dose-log-amt  { color:var(--text); font-weight:700; }
+body.edit-active .edit-overlay { display: flex; }
+
+.drag-handle { color: #fff; opacity: 0.8; cursor: grab; padding: 8px; display: flex; align-items: center; }
+.drag-handle:active { cursor: grabbing; }
+
+.overlay-btn {
+    padding: 10px 18px; border-radius: 12px; border: none;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    cursor: pointer; transition: opacity 0.15s, background 0.2s;
+}
+.edit-btn-card   { background: var(--primary); color: #fff; }
+.delete-btn-card { background: var(--danger);  color: #fff; }
+.overlay-btn:active { opacity: 0.8; }
+
+body.edit-active .med-card { animation: cardShake 0.35s infinite linear; }
+@keyframes cardShake { 0%{transform:rotate(0.4deg)} 50%{transform:rotate(-0.4deg)} 100%{transform:rotate(0.4deg)} }
+
+/* ── Swipe-to-delete ─────────────────────────────────────────────────────── */
+.swipe-delete-bg {
+    position: absolute; inset: 0; border-radius: var(--radius-card);
+    background: var(--danger); display: flex; align-items: center;
+    justify-content: flex-end; padding-right: 28px;
+    opacity: 0; pointer-events: none; z-index: 0;
+}
+.swipe-delete-bg span { color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; }
+
+.drag-placeholder {
+    border-radius: var(--radius-card); background: var(--bg-2);
+    border: 2px dashed var(--border); opacity: 0.6;
+}
+
+/* ── Dose log ────────────────────────────────────────────────────────────── */
+.dose-log         { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.dose-log-toggle  { width: 100%; display: flex; align-items: center; justify-content: space-between; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-sec); }
+.dose-log-toggle:hover { color: var(--text); }
+.toggle-chevron   { transition: transform 0.25s ease; flex-shrink: 0; }
+.dose-log-body    { margin-top: 10px; }
+.dose-log-row     { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dose-log-row:last-child { border-bottom: none; }
+.dose-log-time    { color: var(--text-sec); font-weight: 500; }
+.dose-log-amt     { color: var(--text); font-weight: 700; }
 
 /* ── Toast ───────────────────────────────────────────────────────────────── */
 .toast {
-    position:fixed; bottom:32px; left:50%;
-    transform:translateX(-50%) translateY(120px);
-    background:#1C1C1E; color:#fff; padding:13px 20px; border-radius:16px;
-    display:flex; align-items:center; gap:18px; z-index:1000;
-    transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
-    box-shadow:0 8px 28px rgba(0,0,0,0.28); white-space:nowrap; font-weight:500; font-size:14px;
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: #1C1C1E; color: #fff; padding: 13px 20px; border-radius: 16px;
+    display: flex; align-items: center; gap: 18px; z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28); white-space: nowrap; font-weight: 500; font-size: 14px;
 }
-html.dark .toast { background:#2C2C3A; }
-.toast.active { transform:translateX(-50%) translateY(0); }
-.toast-undo { background:transparent; border:none; color:#FFD60A; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
+html.dark .toast { background: #2C2C3A; }
+.toast.active { transform: translateX(-50%) translateY(0); }
+.toast-undo { background: transparent; border: none; color: #FFD60A; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; }
 
-/* ── Modals (refill + edit) ──────────────────────────────────────────────── */
+/* ── Modals ──────────────────────────────────────────────────────────────── */
 .modal-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(8px); display:none; align-items:center;
-    justify-content:center; z-index:2000; padding:20px;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px); display: none; align-items: center;
+    justify-content: center; z-index: 2000; padding: 20px;
 }
-.modal-overlay.active { display:flex; }
+.modal-overlay.active { display: flex; }
 .modal-content {
-    background:var(--card); padding:28px 24px; border-radius:28px;
-    width:100%; max-width:340px; text-align:center;
-    box-shadow:0 24px 60px rgba(0,0,0,0.35); transition:var(--tt);
+    background: var(--card); padding: 28px 24px; border-radius: 28px;
+    width: 100%; max-width: 340px; text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35); transition: var(--tt);
 }
-.modal-content h3 { margin:0 0 10px; font-size:19px; font-weight:800; letter-spacing:-0.3px; color:var(--text); }
-.modal-content p  { color:var(--text-sec); font-size:14px; font-weight:500; line-height:1.55; margin:0; }
-.modal-content strong { color:var(--text); }
-
-/* Edit modal — left-aligned inputs */
-.edit-modal-content { text-align:left; }
-.edit-modal-content h3 { text-align:center; }
-.edit-input-stack { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
-.edit-stats-grid  { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-
-.modal-actions { display:flex; flex-direction:column; gap:10px; margin-top:22px; }
-.modal-btn { padding:15px; border-radius:14px; border:none; font-family:inherit; font-weight:700; font-size:15px; cursor:pointer; transition:opacity 0.15s; }
-.modal-btn:active  { opacity:0.8; }
-.modal-btn.primary { background:var(--primary); color:#fff; }
-.modal-btn.secondary { background:var(--border); color:var(--text); }
-.modal-btn.cancel  { background:transparent; color:var(--danger); }
+.modal-content h3      { margin: 0 0 10px; font-size: 19px; font-weight: 800; letter-spacing: -0.3px; color: var(--text); }
+.modal-content p       { color: var(--text-sec); font-size: 14px; font-weight: 500; line-height: 1.55; margin: 0; }
+.modal-content strong  { color: var(--text); }
+.edit-modal-content    { text-align: left; }
+.edit-modal-content h3 { text-align: center; }
+.edit-input-stack      { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.edit-stats-grid       { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions         { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.modal-btn             { padding: 15px; border-radius: 14px; border: none; font-family: inherit; font-weight: 700; font-size: 15px; cursor: pointer; transition: opacity 0.15s; }
+.modal-btn:active      { opacity: 0.8; }
+.modal-btn.primary     { background: var(--primary); color: #fff; }
+.modal-btn.secondary   { background: var(--border); color: var(--text); }
+.modal-btn.cancel      { background: transparent; color: var(--danger); }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
-.footer-actions { display:flex; justify-content:center; margin-top:36px; }
+.footer-actions  { display: flex; justify-content: center; margin-top: 36px; }
 .edit-btn-footer {
-    background:transparent; border:none; color:var(--text-sec); font-family:inherit;
-    font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase;
-    cursor:pointer; transition:color 0.2s,transform 0.2s,opacity 0.2s;
+    background: transparent; border: none; color: var(--text-sec); font-family: inherit;
+    font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    cursor: pointer; transition: color 0.2s, transform 0.2s, opacity 0.2s;
 }
-.edit-btn-footer.active { color:var(--danger); transform:scale(1.08); }
+.edit-btn-footer.active { color: var(--danger); transform: scale(1.08); }
+
+/* ── Slide success flash (#9) ────────────────────────────────────────────── */
+@keyframes cardFlash {
+    0%   { box-shadow: var(--shadow); }
+    30%  { box-shadow: 0 0 0 3px var(--success), 0 4px 20px rgba(48,209,88,0.35); }
+    100% { box-shadow: var(--shadow); }
+}
+.slide-success { animation: cardFlash 0.4s ease-out forwards; }
+
+/* ── Quick refill modal stepper (#2) ─────────────────────────────────────── */
+.refill-stepper {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin: 20px 0 4px;
+    background: var(--bg-2); border-radius: 18px; overflow: hidden;
+    height: 64px;
+}
+.refill-step-btn {
+    width: 64px; height: 64px; background: transparent; border: none;
+    font-size: 26px; color: var(--primary); cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+}
+.refill-step-btn:active { background: rgba(10,132,255,0.12); }
+.refill-qty-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+}
+.refill-qty-wrap span:first-child {
+    font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; line-height: 1;
+}
+.refill-unit-label {
+    font-size: 11px !important; font-weight: 600 !important;
+    color: var(--text-sec) !important; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* ── Refill modal — dose change row ──────────────────────────────────────── */
+.refill-dose-row {
+    margin-top: 16px;
+    text-align: left;
+}
+.refill-dose-label {
+    font-size: 11px; font-weight: 700; color: var(--text-sec);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    display: block; margin-bottom: 8px;
+}
+.refill-dose-input {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 15px; font-family: inherit; font-weight: 500;
+    background: var(--input-bg); color: var(--text);
+    outline: none; transition: border-color 0.2s;
+}
+.refill-dose-input:focus { border-color: var(--primary); }

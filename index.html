@@ -22,37 +22,78 @@
         <div id="sync-display" class="sync-status">Synced just now</div>
     </header>
 
-    <section class="card">
-        <div class="input-stack">
-            <div>
-                <label>Select Medication</label>
-                <select id="med-selector"><option value="">Search from common medications…</option></select>
-            </div>
-            <div>
-                <label>Or Enter Custom Name</label>
-                <input type="text" id="custom-name" placeholder="e.g. Metformin 500mg">
-            </div>
-            <div class="stats-grid">
+    <div class="setup-wrap">
+        <section class="card">
+            <div class="input-stack">
                 <div>
-                    <label>Total Units in Stock</label>
-                    <input type="number" id="new-stock" placeholder="0" min="0">
+                    <label>Select Medication</label>
+                    <select id="med-selector">
+                        <option value="">Search from common medications…</option>
+                    </select>
                 </div>
                 <div>
-                    <label>Daily Dose</label>
-                    <input type="text" id="new-freq" placeholder="e.g. 1 or 2-3">
+                    <label>Or Enter Custom Name</label>
+                    <input type="text" id="custom-name" placeholder="e.g. Metformin 500mg">
                 </div>
+                <div class="stats-grid">
+                    <div>
+                        <label>Total Units in Stock</label>
+                        <input type="number" id="new-stock" placeholder="0" min="0">
+                    </div>
+                    <div>
+                        <label>Daily Dose</label>
+                        <input type="text" id="new-freq" placeholder="e.g. 1 or 2-3">
+                    </div>
+                </div>
+                <button id="add-track-btn" class="primary-btn">Begin Tracking</button>
             </div>
-            <button id="add-track-btn" class="primary-btn">Begin Tracking</button>
-        </div>
-    </section>
+        </section>
+    </div>
 
     <div id="med-list"></div>
 
-    <!-- Refill modal -->
+    <!-- Onboarding -->
+    <div id="onboarding" class="onboarding-overlay">
+        <div class="onboarding-card">
+            <div class="onboarding-icon">💊</div>
+            <h2>Welcome to My Meds</h2>
+            <p>Your personal medication tracker. Set it up once and let it run — stock updates automatically every day.</p>
+            <div class="onboarding-steps">
+                <div class="onboarding-step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <strong>Add your medications</strong>
+                        <span>Enter the name, current stock, and daily dose.</span>
+                    </div>
+                </div>
+                <div class="onboarding-step">
+                    <div class="step-num">2</div>
+                    <div class="step-text">
+                        <strong>Enable notifications</strong>
+                        <span>Tap 🔔 so we can alert you when stock runs low.</span>
+                    </div>
+                </div>
+                <div class="onboarding-step">
+                    <div class="step-num">3</div>
+                    <div class="step-text">
+                        <strong>Install to home screen</strong>
+                        <span>Tap ⋮ → Add to Home Screen for background sync to work automatically.</span>
+                    </div>
+                </div>
+            </div>
+            <button id="onboard-btn" class="onboarding-btn">Get Started</button>
+        </div>
+    </div>
+
+    <!-- Refill / duplicate modal -->
     <div id="refill-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Medication Already Tracked</h3>
             <p id="modal-body"></p>
+            <div class="refill-dose-row">
+                <label class="refill-dose-label">Daily dose (leave blank to keep current)</label>
+                <input type="text" id="modal-freq" class="refill-dose-input" placeholder="e.g. 1 or 2-3">
+            </div>
             <div class="modal-actions">
                 <button id="modal-add"     class="modal-btn primary">Add to Existing Stock</button>
                 <button id="modal-replace" class="modal-btn secondary">Replace Stock</button>
@@ -89,9 +130,50 @@
         </div>
     </div>
 
+    <!-- Extra dose modal (kept as fallback, not used in current flow) -->
+    <div id="extra-dose-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="extra-med-name">Extra Dose</h3>
+            <p id="extra-stock-info"></p>
+            <div class="modal-actions" style="margin-top:16px">
+                <button id="extra-confirm-btn" class="modal-btn primary">Confirm</button>
+                <button id="extra-cancel-btn"  class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="extra-med-id">
+    <input type="hidden" id="extra-amount">
+
+
+    <!-- Quick refill modal (#2) -->
+    <div id="refill-modal-2" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="refill-med-name">Refill</h3>
+            <p id="refill-current"></p>
+            <div class="refill-stepper">
+                <button id="refill2-minus" class="refill-step-btn">−</button>
+                <div class="refill-qty-wrap">
+                    <span id="refill-qty">30</span>
+                    <span class="refill-unit-label">units</span>
+                </div>
+                <button id="refill2-plus" class="refill-step-btn">+</button>
+            </div>
+            <div class="refill-dose-row">
+                <label class="refill-dose-label">Daily dose</label>
+                <input type="text" id="refill2-freq" class="refill-dose-input" placeholder="e.g. 1 or 2-3">
+            </div>
+            <div class="modal-actions">
+                <button id="refill2-add"     class="modal-btn primary">Add to Current Stock</button>
+                <button id="refill2-replace" class="modal-btn secondary">Replace Stock</button>
+                <button id="refill2-cancel"  class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="refill-med-id">
+
     <!-- Undo toast -->
     <div id="undo-toast" class="toast">
-        <span class="toast-msg">Dose recorded</span>
+        <span class="toast-msg">Done</span>
         <button class="toast-undo" onclick="App.undo()">Undo</button>
     </div>
 
@@ -100,6 +182,9 @@
     </div>
 
 </div>
+
+<!-- Medicine list — edit medicines.js to customise the dropdown -->
+<script src="medicines.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
