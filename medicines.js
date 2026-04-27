@@ -10,7 +10,6 @@
 
 const MASTER_LIST = [
     "Euthyrox",
-    "Ibuprofen",
     "Metoprolol",
     "Nexium",
     "Procombo",
