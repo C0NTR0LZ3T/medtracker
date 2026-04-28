@@ -1,12 +1,19 @@
-const MEDS_KEY = 'medtracker_meds_v1';
-const SYNC_KEY = 'medtracker_sync_v1';
-const SYNC_TAG = 'daily-stock-deduction';
+const MEDS_KEY  = 'medtracker_meds_v1';
+const SYNC_KEY  = 'medtracker_sync_v1';
+const SYNC_TAG  = 'daily-stock-deduction';
+const SW_VERSION = 4; // bump this with every deployment
 
 // ── Install & activate ────────────────────────────────────────────────────
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
-    e.waitUntil(self.clients.claim());
+    e.waitUntil(
+        self.clients.claim().then(async () => {
+            // Tell all open tabs a new version is available
+            const allClients = await self.clients.matchAll({ type: 'window' });
+            allClients.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: SW_VERSION }));
+        })
+    );
 });
 
 // ── Periodic Background Sync ──────────────────────────────────────────────
@@ -74,6 +81,10 @@ async function runBackgroundDeduction() {
 
     const clients = await self.clients.matchAll({ type: 'window' });
     clients.forEach(c => c.postMessage({ type: 'BG_SYNC_COMPLETE' }));
+
+    // Also fire any dose reminders whose time window falls within the last hour
+    // (fallback for devices that don't support Notification Triggers)
+    await checkDoseReminders();
 }
 
 // ── Message handling ──────────────────────────────────────────────────────
@@ -90,6 +101,11 @@ self.addEventListener('message', event => {
             tag:     event.data.tag || 'medtracker',
             data:    { url: self.registration.scope }
         });
+    }
+
+    // Store reminder schedule so periodic sync can fire them as fallback
+    if (event.data.type === 'SCHEDULE_REMINDERS') {
+        openDB().then(db => dbSet(db, 'reminders_v1', event.data.meds));
     }
 
     // Legacy / direct notification pathways (kept for compatibility)
@@ -126,16 +142,85 @@ self.addEventListener('message', event => {
     }
 });
 
-// ── Notification click ────────────────────────────────────────────────────
+// ── Notification click & actions ──────────────────────────────────────────
 self.addEventListener('notificationclick', event => {
-    event.notification.close();
+    const { action, notification } = event;
+    notification.close();
+
+    if (action === 'snooze') {
+        // Re-fire the notification 30 minutes from now
+        const { medName, time } = notification.data || {};
+        event.waitUntil(
+            new Promise(resolve => {
+                setTimeout(async () => {
+                    await self.registration.showNotification(`💊 Snoozed: ${medName || 'Medication'}`, {
+                        body:    `Your ${time || ''} dose reminder (snoozed)`,
+                        icon:    'images/icon.png',
+                        badge:   'images/icon.png',
+                        vibrate: [200, 100, 200],
+                        tag:     notification.tag + '-snooze',
+                        actions: [
+                            { action: 'snooze',  title: '⏰ Snooze 30min' },
+                            { action: 'dismiss', title: '✓ Dismiss' }
+                        ],
+                        data: notification.data
+                    });
+                    resolve();
+                }, 30 * 60 * 1000); // 30 minutes
+                resolve(); // resolve immediately so SW doesn't get killed
+            })
+        );
+        return;
+    }
+
+    // 'dismiss' action or tapping the notification body — open the app
+    if (action === 'dismiss') return;
+
     event.waitUntil(
         self.clients.matchAll({ type: 'window' }).then(list => {
             if (list.length > 0) return list[0].focus();
-            return self.clients.openWindow('./');
+            return self.clients.openWindow(notification.data?.url || './');
         })
     );
 });
+
+// ── Dose reminder check (periodic-sync fallback) ──────────────────────────
+async function checkDoseReminders() {
+    try {
+        const db       = await openDB();
+        const schedule = await dbGet(db, 'reminders_v1');
+        if (!schedule?.length) return;
+
+        const now     = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+
+        for (const med of schedule) {
+            for (const time of (med.reminders || [])) {
+                const [h, m]     = time.split(':').map(Number);
+                const targetMins = h * 60 + m;
+                const diff       = Math.abs(nowMins - targetMins);
+                // Fire if within ±30 min (periodic sync isn't exact to the minute)
+                if (diff <= 30) {
+                    await self.registration.showNotification(`💊 Time to take ${med.name}`, {
+                        body:    `Your ${time} dose reminder`,
+                        icon:    'images/icon.png',
+                        badge:   'images/icon.png',
+                        vibrate: [200, 100, 200],
+                        tag:     `dose-reminder-${med.id}-${time}`,
+                        renotify: true,
+                        actions: [
+                            { action: 'snooze',  title: '⏰ Snooze 30min' },
+                            { action: 'dismiss', title: '✓ Dismiss' }
+                        ],
+                        data:    { url: self.registration.scope, medId: med.id, medName: med.name, time }
+                    });
+                }
+            }
+        }
+    } catch(e) {
+        console.warn('[MedTracker] Dose reminder check failed:', e);
+    }
+}
 
 // ── IndexedDB helpers ─────────────────────────────────────────────────────
 function openDB() {

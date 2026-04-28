@@ -45,6 +45,27 @@
                         <input type="text" id="new-freq" placeholder="e.g. 1 or 2-3">
                     </div>
                 </div>
+                <!-- More options -->
+                <button type="button" class="more-options-toggle" id="more-options-btn" onclick="App.toggleMoreOptions()">
+                    <span>More options</span>
+                    <svg class="more-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="more-options-section" class="more-options-section">
+                    <div class="reminder-section">
+                        <label>Dose Reminders</label>
+                        <div class="reminder-input-row">
+                            <input type="time" id="new-reminder-time" class="reminder-time-input">
+                            <button type="button" class="reminder-add-btn" onclick="App.addReminderChip('new-reminders-list','new-reminder-time')">+ Add</button>
+                        </div>
+                        <div id="new-reminders-list" class="reminders-list"></div>
+                    </div>
+                    <div>
+                        <label>Notes</label>
+                        <textarea id="new-notes" class="notes-input" placeholder="e.g. Take with food · Avoid alcohol · Morning only" rows="2"></textarea>
+                    </div>
+                </div>
+
                 <button id="add-track-btn" class="primary-btn">Begin Tracking</button>
             </div>
         </section>
@@ -122,6 +143,18 @@
                         <input type="text" id="edit-freq" placeholder="1 or 2-3">
                     </div>
                 </div>
+                <div class="reminder-section" style="margin-top:12px">
+                    <label>Dose Reminders</label>
+                    <div class="reminder-input-row">
+                        <input type="time" id="edit-reminder-time" class="reminder-time-input">
+                        <button type="button" class="reminder-add-btn" onclick="App.addReminderChip('edit-reminders-list','edit-reminder-time')">+ Add</button>
+                    </div>
+                    <div id="edit-reminders-list" class="reminders-list"></div>
+                </div>
+                <div style="margin-top:12px">
+                    <label>Notes</label>
+                    <textarea id="edit-notes" class="notes-input" placeholder="e.g. Take with food · Avoid alcohol" rows="2"></textarea>
+                </div>
             </div>
             <div class="modal-actions">
                 <button id="edit-save-btn"   class="modal-btn primary">Save Changes</button>
@@ -171,10 +204,34 @@
     </div>
     <input type="hidden" id="refill-med-id">
 
+    <!-- Import confirmation modal -->
+    <div id="import-confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Import Backup</h3>
+            <p id="import-summary" style="margin-top:8px"></p>
+            <div class="modal-actions">
+                <button class="modal-btn primary"   onclick="App.confirmImport('merge')">Merge with current</button>
+                <button class="modal-btn secondary" onclick="App.confirmImport('replace')">Replace all data</button>
+                <button class="modal-btn cancel"    onclick="document.getElementById('import-confirm-modal').classList.remove('active')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Undo toast -->
     <div id="undo-toast" class="toast">
         <span class="toast-msg">Done</span>
         <button class="toast-undo" onclick="App.undo()">Undo</button>
+    </div>
+
+    <div id="edit-action-bar" class="edit-action-bar">
+        <button id="import-btn" class="action-bar-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import
+        </button>
+        <button id="export-btn" class="action-bar-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+        </button>
     </div>
 
     <div class="footer-actions">

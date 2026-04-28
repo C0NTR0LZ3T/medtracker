@@ -1,11 +1,28 @@
 // MASTER_LIST is loaded from medicines.js (loaded before this script in index.html)
 
+// ─── Schema version & migration ────────────────────────────────────────────
+const SCHEMA_VERSION = 3;
+
+function migrateMed(m) {
+    // Ensure every field introduced across versions is present with a safe default
+    if (!Array.isArray(m.reminders))  m.reminders  = [];
+    if (typeof m.notes !== 'string')  m.notes       = '';
+    if (!Array.isArray(m.doseLog))    m.doseLog     = [];
+    if (typeof m.order !== 'number')  m.order       = 0;
+    if (!m.maxStock)                  m.maxStock     = m.stock || 0;
+    if (!m.threshold)                 m.threshold    = Math.max(1, Math.floor((m.stock||0) * 0.1));
+    if (!m.patternIdx)                m.patternIdx   = 0;
+    if (!m.takeAmount)                m.takeAmount   = m.frequency || 1;
+    return m;
+}
+
 // ─── Storage ───────────────────────────────────────────────────────────────
 const STORAGE = {
     MEDS_KEY:    'medtracker_meds_v1',
     SYNC_KEY:    'medtracker_sync_v1',
     THEME_KEY:   'medtracker_theme',
     ONBOARD_KEY: 'medtracker_onboarded',
+    VER_KEY:     'medtracker_schema_ver',
 
     load() {
         const legacy = localStorage.getItem('meds_inventory_v15');
@@ -14,8 +31,11 @@ const STORAGE = {
             localStorage.removeItem('meds_inventory_v15');
             localStorage.removeItem('sync_time_v15');
         }
+        const rawMeds = JSON.parse(localStorage.getItem(this.MEDS_KEY)) || [];
+        // Run migration on every load — safe to run repeatedly
+        const meds = rawMeds.map(migrateMed);
         return {
-            meds:      JSON.parse(localStorage.getItem(this.MEDS_KEY)) || [],
+            meds,
             sync:      parseInt(localStorage.getItem(this.SYNC_KEY))   || Date.now(),
             theme:     localStorage.getItem(this.THEME_KEY)            || 'system',
             onboarded: !!localStorage.getItem(this.ONBOARD_KEY)
@@ -85,6 +105,20 @@ const App = {
         this.extraModal  = document.getElementById('extra-dose-modal');
     },
 
+    // ── PWA update banner ─────────────────────────────────────────────────────
+    _showUpdateBanner() {
+        // Only show once per session
+        if (document.getElementById('update-banner')) return;
+        const banner = document.createElement('div');
+        banner.id        = 'update-banner';
+        banner.className = 'update-banner';
+        banner.innerHTML = `
+            <span>🆕 App updated</span>
+            <button onclick="window.location.reload()">Reload</button>
+            <button onclick="this.closest('#update-banner').remove()" aria-label="Dismiss">×</button>`;
+        document.querySelector('.app-container').prepend(banner);
+    },
+
     // ── Onboarding ────────────────────────────────────────────────────────────
     showOnboarding()    { this.onboarding?.classList.add('active'); },
     dismissOnboarding() { this.onboarding?.classList.remove('active'); STORAGE.setOnboarded(); },
@@ -145,6 +179,9 @@ const App = {
                 this.updateSyncLabel();
                 this.showToast('Stock updated in background', false);
             }
+            if (e.data?.type === 'SW_UPDATED') {
+                this._showUpdateBanner();
+            }
         });
 
         const btn = document.getElementById('notif-btn');
@@ -171,6 +208,7 @@ const App = {
                 });
                 this.checkLowStockAlerts();
                 this.scheduleRefillReminders();
+                this.scheduleDoseReminders();
             }
         });
     },
@@ -230,6 +268,58 @@ const App = {
         });
     },
 
+    // ── Dose reminder scheduling ──────────────────────────────────────────────
+    // Called whenever meds are saved. Registers a Notification Trigger for
+    // each reminder time so the OS fires the notification even when app is closed.
+    async scheduleDoseReminders() {
+        if (Notification.permission !== 'granted') return;
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            // Send full reminder list to SW so it can handle periodic-sync fallback
+            reg.active?.postMessage({
+                type: 'SCHEDULE_REMINDERS',
+                meds: this.activeMeds.map(m => ({
+                    id: m.id, name: m.name, reminders: m.reminders || []
+                }))
+            });
+
+            // Notification Triggers API — Chrome/Android PWA only
+            if (!('showTrigger' in Notification.prototype)) return;
+            // Cancel previous triggers first by re-registering SW
+            this.activeMeds.forEach(m => {
+                (m.reminders || []).forEach(time => {
+                    const ts = this._nextTriggerTimestamp(time);
+                    reg.showNotification(`💊 Time to take ${m.name}`, {
+                        body:        `Your ${time} dose — ${m.stock > 0 ? `${m.stock} units remaining` : 'stock is empty, time to refill'}`,
+                        icon:        'images/icon.png',
+                        badge:       'images/icon.png',
+                        tag:         `dose-${m.id}-${time}`,
+                        renotify:    true,
+                        actions:     [
+                            { action: 'snooze',  title: '⏰ Snooze 30min' },
+                            { action: 'dismiss', title: '✓ Dismiss' }
+                        ],
+                        showTrigger: new TimestampTrigger(ts),
+                        data:        { url: self.registration.scope, medId: m.id, medName: m.name, time }
+                    });
+                });
+            });
+        } catch(e) {
+            console.warn('[MedTracker] Reminder scheduling failed:', e);
+        }
+    },
+
+    // Returns timestamp for the next occurrence of HH:MM (today if not yet passed, tomorrow if it has)
+    _nextTriggerTimestamp(timeStr) {
+        const [h, m]  = timeStr.split(':').map(Number);
+        const now     = new Date();
+        const target  = new Date(now);
+        target.setHours(h, m, 0, 0);
+        if (target <= now) target.setDate(target.getDate() + 1);
+        return target.getTime();
+    },
+
     // ── 24-hour sync ──────────────────────────────────────────────────────────
     syncStock() {
         const days = Math.floor((Date.now() - this.lastSync) / 86_400_000);
@@ -273,6 +363,7 @@ const App = {
             this.isEditMode = !this.isEditMode;
             document.body.classList.toggle('edit-active', this.isEditMode);
             this.editBtn.classList.toggle('active', this.isEditMode);
+            document.getElementById('edit-action-bar').classList.toggle('active', this.isEditMode);
             this.haptic('medium');
             this.editBtn.style.opacity = '0';
             setTimeout(() => {
@@ -285,6 +376,9 @@ const App = {
         document.getElementById('modal-add').onclick     = () => this.confirmRefill('add');
         document.getElementById('modal-replace').onclick = () => this.confirmRefill('replace');
         document.getElementById('modal-cancel').onclick  = () => { this.modal.classList.remove('active'); const mf=document.getElementById('modal-freq'); if(mf) mf.value=''; };
+
+        document.getElementById('export-btn').onclick = () => this.exportData();
+        document.getElementById('import-btn').onclick = () => this.importData();
 
         document.getElementById('edit-save-btn').onclick   = () => this.saveEdit();
         document.getElementById('edit-cancel-btn').onclick = () => this.editModal.classList.remove('active');
@@ -301,6 +395,45 @@ const App = {
         const extraCancel  = document.getElementById('extra-cancel-btn');
         if (extraConfirm) extraConfirm.onclick = () => this.confirmExtraDose();
         if (extraCancel)  extraCancel.onclick  = () => this.extraModal?.classList.remove('active');
+    },
+
+    toggleMoreOptions() {
+        const section = document.getElementById('more-options-section');
+        const btn     = document.getElementById('more-options-btn');
+        if (!section) return;
+        const open = section.classList.toggle('open');
+        btn.querySelector('.more-chevron').style.transform = open ? 'rotate(180deg)' : '';
+        if (open) {
+            // Request notification permission proactively if not yet granted
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+    },
+
+    // ── Reminder chip helpers ─────────────────────────────────────────────────
+    _getRemindersFromContainer(containerId) {
+        const chips = document.querySelectorAll(`#${containerId} .reminder-chip`);
+        return [...chips].map(c => c.dataset.time).filter(Boolean);
+    },
+
+    addReminderChip(containerId, inputId) {
+        const input = document.getElementById(inputId);
+        const time  = input?.value;
+        if (!time) return;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        // Prevent duplicates
+        if (container.querySelector(`[data-time="${time}"]`)) {
+            input.value = ''; return;
+        }
+        const chip = document.createElement('div');
+        chip.className   = 'reminder-chip';
+        chip.dataset.time = time;
+        chip.innerHTML   = `<span>🔔 ${time}</span><button type="button" onclick="this.closest('.reminder-chip').remove()" aria-label="Remove">×</button>`;
+        container.appendChild(chip);
+        input.value = '';
+        this.haptic('light');
     },
 
     // ── Frequency parser ──────────────────────────────────────────────────────
@@ -338,16 +471,19 @@ const App = {
         if (!valid) return this.shake('new-freq');
 
         const existing = this.activeMeds.find(m => m.name.toLowerCase() === name.toLowerCase());
+        const reminders = this._getRemindersFromContainer('new-reminders-list');
+        const notes     = document.getElementById('new-notes')?.value.trim() || '';
         if (existing) {
-            this.pendingAction = { existing, stock, frequency, pattern };
+            this.pendingAction = { existing, stock, frequency, pattern, reminders, notes };
             this.modalBody.innerHTML = `<strong>${existing.name}</strong> is already tracked with <strong>${existing.stock}</strong> units remaining. How would you like to proceed?`;
             this.modal.classList.add('active');
         } else {
             this.activeMeds.push({
-                id: Date.now(), name, stock, maxStock: stock,  // maxStock = initial bottle size
+                id: Date.now(), name, stock, maxStock: stock,
                 frequency, pattern, patternIdx: 0,
                 threshold: Math.max(1, Math.floor(stock*0.1)),
                 takeAmount: frequency||1, doseLog: [],
+                reminders, notes,
                 order: this.activeMeds.length
             });
             this.haptic('medium');
@@ -388,6 +524,12 @@ const App = {
 
         existing.threshold = Math.max(1, Math.floor(existing.stock * 0.1));
         if (!existing.doseLog) existing.doseLog = [];
+        if (this.pendingAction.reminders?.length) {
+            existing.reminders = this.pendingAction.reminders;
+        }
+        if (this.pendingAction.notes) {
+            existing.notes = this.pendingAction.notes;
+        }
         this.modal.classList.remove('active');
         // Clear the dose field for next time
         if (document.getElementById('modal-freq')) document.getElementById('modal-freq').value = '';
@@ -451,6 +593,13 @@ const App = {
     finalize() {
         ['custom-name','new-stock','new-freq'].forEach(id => { document.getElementById(id).value=''; });
         this.selectorEl.value = '';
+        // Clear reminder chips and collapse more-options
+        const list = document.getElementById('new-reminders-list');
+        if (list) list.innerHTML = '';
+        const notesEl = document.getElementById('new-notes');
+        if (notesEl) notesEl.value = '';
+        const moreSection = document.getElementById('more-options-section');
+        if (moreSection) moreSection.classList.remove('open');
         this.save(); this.render(); this.checkLowStockAlerts();
     },
 
@@ -462,6 +611,20 @@ const App = {
         document.getElementById('edit-name').value  = med.name;
         document.getElementById('edit-stock').value = med.stock;
         document.getElementById('edit-freq').value  = med.pattern ? med.pattern.join('-') : med.frequency;
+        const editNotes = document.getElementById('edit-notes');
+        if (editNotes) editNotes.value = med.notes || '';
+        // Populate reminder chips
+        const list = document.getElementById('edit-reminders-list');
+        if (list) {
+            list.innerHTML = '';
+            (med.reminders || []).forEach(time => {
+                const chip = document.createElement('div');
+                chip.className    = 'reminder-chip';
+                chip.dataset.time = time;
+                chip.innerHTML    = `<span>🔔 ${time}</span><button type="button" onclick="this.closest('.reminder-chip').remove()" aria-label="Remove">×</button>`;
+                list.appendChild(chip);
+            });
+        }
         this.editModal.classList.add('active');
     },
 
@@ -476,11 +639,12 @@ const App = {
         const med = this.activeMeds.find(m => m.id===id);
         if (!med) return;
         med.name=name; med.stock=stock;
-        // Only raise maxStock, never lower it via edit — refill flow handles that
         med.maxStock   = Math.max(med.maxStock || 0, stock);
         med.frequency  = frequency; med.pattern = pattern;
         med.patternIdx = 0; med.takeAmount = frequency||1;
         med.threshold  = Math.max(1, Math.floor(stock*0.1));
+        med.reminders  = this._getRemindersFromContainer('edit-reminders-list');
+        med.notes      = document.getElementById('edit-notes')?.value.trim() || '';
         this.editModal.classList.remove('active');
         this.haptic('success'); this.save(); this.render();
     },
@@ -582,6 +746,8 @@ const App = {
                         <div class="supply-bar-fill ${barClass}" style="width:${barPct}%"></div>
                     </div>
                     <div class="supply-label ${colorClass}">${supplyLabel}</div>
+                    ${(m.reminders||[]).length ? `<div class="reminder-times">${(m.reminders).map(t=>`<span class="reminder-pill">🔔 ${t}</span>`).join('')}</div>` : ''}
+                    ${m.notes ? `<div class="card-notes">${m.notes}</div>` : ''}
                 </div>
 
                 ${!isEmpty ? `
@@ -609,14 +775,11 @@ const App = {
                     <button class="overlay-btn delete-btn-card" onclick="App.deleteMed(${m.id},this)">Delete</button>
                 </div>
 
-                <div class="swipe-delete-bg"><span>Delete</span></div>
-
                 ${logHTML}
             </div>`;
         }).join('');
 
         this.initCardSliders();
-        this.initSwipeDelete();
         if (this.isEditMode) this.initDragReorder();
     },
 
@@ -700,53 +863,6 @@ const App = {
         btn.querySelector('.toggle-chevron').style.transform = expanded?'':'rotate(180deg)';
     },
 
-    // ── Swipe-to-delete ───────────────────────────────────────────────────────
-    initSwipeDelete() {
-        this.listEl.querySelectorAll('.med-card').forEach(card => {
-            let startX=0, startY=0, dx=0, swiping=false;
-            const THRESHOLD=80;
-
-            const onStart = e => {
-                if (this.isEditMode) return;
-                // Don't activate swipe if the touch started on the slide handle
-                if (e.target?.closest('.slide-handle, .slide-container, .stepper')) return;
-                const t=e.touches?.[0]||e;
-                startX=t.clientX; startY=t.clientY; dx=0; swiping=false;
-                card.style.transition='none';
-            };
-            const onMove = e => {
-                if (this.isEditMode) return;
-                const t=e.touches?.[0]||e;
-                dx=t.clientX-startX;
-                const dy=Math.abs(t.clientY-startY);
-                if (!swiping && Math.abs(dx)>8 && dy<20) swiping=true;
-                if (!swiping||dx>0) return;
-                card.style.transform=`translateX(${dx}px)`;
-                card.querySelector('.swipe-delete-bg').style.opacity=Math.min(1,Math.abs(dx)/THRESHOLD);
-            };
-            const onEnd = () => {
-                if (!swiping) return;
-                card.style.transition='transform 0.3s ease,opacity 0.3s ease';
-                if (dx < -THRESHOLD) {
-                    card.style.transform='translateX(-100%)';
-                    card.style.opacity='0';
-                    setTimeout(()=>{
-                        const id=parseInt(card.dataset.id);
-                        this.activeMeds=this.activeMeds.filter(m=>m.id!==id);
-                        this.save(); this.render();
-                    },300);
-                } else {
-                    card.style.transform='translateX(0)';
-                    card.querySelector('.swipe-delete-bg').style.opacity='0';
-                }
-            };
-
-            card.addEventListener('touchstart', onStart, {passive:true});
-            card.addEventListener('touchmove',  onMove,  {passive:true});
-            card.addEventListener('touchend',   onEnd);
-        });
-    },
-
     // ── Drag to reorder ───────────────────────────────────────────────────────
     initDragReorder() {
         let dragged=null, placeholder=null;
@@ -788,6 +904,88 @@ const App = {
                 this.save(); dragged=null;
             });
         });
+    },
+
+    // ── Export data ───────────────────────────────────────────────────────────
+    exportData() {
+        const payload = {
+            version:  SCHEMA_VERSION,
+            exported: new Date().toISOString(),
+            meds:     this.activeMeds,
+            syncTime: this.lastSync
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const date = new Date().toISOString().slice(0, 10);
+        a.href     = url;
+        a.download = `mymeds-backup-${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('Data exported ✓', false);
+        this.haptic('success');
+    },
+
+    // ── Import data ───────────────────────────────────────────────────────────
+    importData() {
+        const input  = document.createElement('input');
+        input.type   = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const data     = JSON.parse(ev.target.result);
+                    const meds     = Array.isArray(data) ? data : data.meds;
+                    if (!Array.isArray(meds)) throw new Error('Invalid format');
+                    const exported = data.exported ? new Date(data.exported).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : 'unknown date';
+                    const newCount = meds.filter(imp => !this.activeMeds.find(m => m.name.toLowerCase()===imp.name.toLowerCase())).length;
+                    const updCount = meds.length - newCount;
+
+                    // Show confirmation modal
+                    const modal = document.getElementById('import-confirm-modal');
+                    document.getElementById('import-summary').innerHTML =
+                        `Backup from <strong>${exported}</strong><br>` +
+                        `<strong>${meds.length}</strong> medication${meds.length!==1?'s':''} found` +
+                        (newCount  ? ` · <span class="import-new">${newCount} new</span>` : '') +
+                        (updCount  ? ` · <span class="import-upd">${updCount} update${updCount!==1?'s':''}</span>` : '');
+
+                    // Store pending import on the modal element temporarily
+                    modal._pendingImport = { data, meds };
+                    modal.classList.add('active');
+                } catch(err) {
+                    this.showToast('Import failed — invalid file', false);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    },
+
+    confirmImport(mode) {
+        const modal = document.getElementById('import-confirm-modal');
+        const { data, meds } = modal._pendingImport || {};
+        modal.classList.remove('active');
+        if (!meds) return;
+
+        if (mode === 'replace') {
+            this.activeMeds = meds.map(migrateMed);
+        } else {
+            // Merge: update existing by name, append new
+            const merged = [...this.activeMeds];
+            meds.forEach(imp => {
+                const idx = merged.findIndex(m => m.name.toLowerCase() === imp.name.toLowerCase());
+                if (idx >= 0) merged[idx] = migrateMed({ ...merged[idx], ...imp });
+                else          merged.push(migrateMed(imp));
+            });
+            this.activeMeds = merged;
+        }
+        if (data.syncTime) this.lastSync = parseInt(data.syncTime) || this.lastSync;
+        this.save(); this.render();
+        this.showToast(`Imported ${meds.length} medication${meds.length!==1?'s':''} ✓`, false);
+        this.haptic('success');
     },
 
     // ── Delete ────────────────────────────────────────────────────────────────
@@ -833,6 +1031,7 @@ const App = {
                 reg.active?.postMessage({ type:'PERSIST_TO_IDB', meds:this.activeMeds, syncTime:this.lastSync });
             });
         }
+        this.scheduleDoseReminders();
     }
 };
 

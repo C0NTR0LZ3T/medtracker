@@ -257,14 +257,122 @@ body.edit-active .edit-overlay { display: flex; }
 body.edit-active .med-card { animation: cardShake 0.35s infinite linear; }
 @keyframes cardShake { 0%{transform:rotate(0.4deg)} 50%{transform:rotate(-0.4deg)} 100%{transform:rotate(0.4deg)} }
 
-/* ── Swipe-to-delete ─────────────────────────────────────────────────────── */
-.swipe-delete-bg {
-    position: absolute; inset: 0; border-radius: var(--radius-card);
-    background: var(--danger); display: flex; align-items: center;
-    justify-content: flex-end; padding-right: 28px;
-    opacity: 0; pointer-events: none; z-index: 0;
+/* ── Notes textarea ──────────────────────────────────────────────────────── */
+.notes-input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+    font-weight: 400; background: var(--input-bg); color: var(--text);
+    outline: none; resize: none; transition: border-color 0.2s, background 0.3s;
+    line-height: 1.5;
 }
-.swipe-delete-bg span { color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; }
+.notes-input:focus { border-color: var(--primary); background: var(--card); }
+
+/* ── Notes on card ───────────────────────────────────────────────────────── */
+.card-notes {
+    font-size: 12px; color: var(--text-sec); font-style: italic;
+    margin-top: 5px; line-height: 1.45;
+}
+
+/* ── Import badges ───────────────────────────────────────────────────────── */
+.import-new { color: var(--success); font-weight: 700; }
+.import-upd { color: var(--primary); font-weight: 700; }
+
+/* ── PWA update banner ───────────────────────────────────────────────────── */
+.update-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--primary); color: #fff;
+    padding: 10px 16px; border-radius: var(--radius-sm);
+    margin-bottom: 16px; font-size: 13px; font-weight: 600;
+}
+.update-banner span { flex: 1; }
+.update-banner button {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 5px 12px; border-radius: 8px; cursor: pointer;
+    transition: background 0.15s;
+}
+.update-banner button:last-child { padding: 5px 8px; }
+.update-banner button:active { background: rgba(255,255,255,0.35); }
+
+/* ── More options toggle ─────────────────────────────────────────────────── */
+.more-options-toggle {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 10px; border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--border); background: transparent;
+    color: var(--text-sec); font-family: inherit; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+}
+.more-options-toggle:active { color: var(--primary); border-color: var(--primary); }
+.more-chevron { transition: transform 0.25s ease; flex-shrink: 0; }
+
+.more-options-section {
+    display: none; flex-direction: column; gap: 14px;
+    padding-top: 4px;
+}
+.more-options-section.open { display: flex; }
+
+/* ── Reminder section ────────────────────────────────────────────────────── */
+.reminder-section { display: flex; flex-direction: column; gap: 8px; }
+
+.reminder-input-row {
+    display: flex; gap: 8px; align-items: center;
+}
+.reminder-time-input {
+    flex: 1; padding: 11px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 15px; font-family: inherit;
+    font-weight: 500; background: var(--input-bg); color: var(--text);
+    outline: none; transition: border-color 0.2s;
+}
+.reminder-time-input:focus { border-color: var(--primary); }
+
+.reminder-add-btn {
+    padding: 11px 16px; border-radius: var(--radius-sm); border: none;
+    background: var(--primary); color: #fff; font-family: inherit;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    white-space: nowrap; transition: opacity 0.15s;
+}
+.reminder-add-btn:active { opacity: 0.8; }
+
+.reminders-list { display: flex; flex-wrap: wrap; gap: 8px; min-height: 0; }
+
+.reminder-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px 6px 12px; border-radius: 20px;
+    background: rgba(10,132,255,0.12); border: 1px solid rgba(10,132,255,0.25);
+    font-size: 13px; font-weight: 600; color: var(--primary);
+}
+.reminder-chip button {
+    background: none; border: none; color: var(--primary); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 0 2px; opacity: 0.7;
+}
+.reminder-chip button:hover { opacity: 1; }
+
+/* ── Reminder pills on card ──────────────────────────────────────────────── */
+.reminder-times {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+}
+.reminder-pill {
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 20px; background: rgba(10,132,255,0.10);
+    color: var(--primary); border: 1px solid rgba(10,132,255,0.2);
+}
+
+/* ── Edit action bar (Import / Export) ───────────────────────────────────── */
+.edit-action-bar {
+    display: none; justify-content: center; gap: 12px;
+    margin-top: 20px;
+}
+.edit-action-bar.active { display: flex; }
+
+.action-bar-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 22px; border-radius: 14px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--text-sec);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    letter-spacing: 0.3px;
+}
+.action-bar-btn:active { background: var(--bg-2); color: var(--text); }
 
 .drag-placeholder {
     border-radius: var(--radius-card); background: var(--bg-2);
